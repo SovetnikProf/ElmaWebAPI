@@ -10,15 +10,20 @@ password = '123'
 host = 'http://88.87.81.251:1313/API/REST/'
 
 urls = {'auth': 'Authorization/LoginWith',
+
         'task_create': 'Tasks/Create',
         'task_close': 'Tasks/Close',
         'task_complete': 'Tasks/Complete',
+        'task_read': 'Tasks/MarkRead',
+        'add_comment': 'Tasks/AddComment',
+
         'entity_load': 'Entity/Load',
         'entity_query': 'Entity/Query',
         'entity_insert': 'Entity/Insert',
+        'entity_update': 'Entity/Update',
+
         'file_upload': 'Files/Upload',
         'file_download': 'Files/Download',
-        'add_comment': 'Tasks/AddComment',
         'file_size': 'Files/FileSize'
        }
 
@@ -43,32 +48,71 @@ session_token = r['SessionToken']
 current_user = r['CurrentUserId']
 
 headers = {'ApplicationToken': app_token,
-          'AuthToken': auth_token,
-          'Content-Type': 'application/json; charset=utf-8'}
+           'AuthToken': auth_token,
+           'Content-Type': 'application/json; charset=utf-8'}
 
 # ----- some definitions -----
 
 class Item:
-    Items = []
-
-    def __init__(self, name=None, value=None, data=None, dataarray=None):
-        def todata(items):
-            dat = Item()
-            dat.Items = [item for item in items]
-            return dat
-
-        if dataarray:
-            self.DataArray = [todata([dat]) for dat in dataarray]
-        if data:
-            self.Data = todata(data)
+    def __init__(self, name, value=None, data=None, dataarray=None):
         self.Name = name
-        self.Value = value
+        self.value = value
+        if data is not None:
+            self.data = data
+        if dataarray is not None:
+            self.dataarray = dataarray
+
+    @property
+    def value(self):
+        return self.Value
+    @value.setter
+    def value(self, val):
+        self.Value = val
+
+    @property
+    def data(self):
+        return self.Data
+    @data.setter
+    def data(self, val):
+        if type(val) != Data: raise Exception('Type of data must be Data, not {}'.format(type(val)))
+        self.Data = val
+
+    @property
+    def dataarray(self):
+        return self.DataArray
+    @dataarray.setter
+    def dataarray(self, val):
+        if type(val) != DataArray: raise Exception('Type of dataarray must be DataArray, not {}'.format(type(val)))
+        self.DataArray = val
 
     def __str__(self):
         return str(self.__dict__)
 
+class Data:
+    def __init__(self, *args):
+        self.Items = []
+        for item in args:
+            self.Items.append(item)
+
+    def add_items(self, *args):
+        for item in args:
+            self.Items.append(item)
+
+    def __str__(self):
+        return str(self.__dict__)
+
+class DataArray(list):
+    def add_datas(self, *args):
+        for data in args:
+            self.append(data)
+
+    def __init__(self, *args):
+        for data in args:
+            self.append(data)
+
 def get_dict(json_):
     results = []
+    if type(json_) != list: json_ = [json_]
     for el in json_:
         results.append({})
         for i in el['Items']:
@@ -76,12 +120,8 @@ def get_dict(json_):
             results[-1][i['Name']].pop('Name', None)
     return results
 
-d = {'Items': []}
-def get_json():
-    global d
-    s = json.encode(d, unpicklable=False)
-    d = {'Items': []}
-    return s
+def get_json(d):
+    return json.encode(d, unpicklable=False)
 
 def date(day=None, month=None, year=None, hour=None, minute=None, now=False):
     if now:
@@ -134,12 +174,11 @@ def file_download(id):
     local = r.headers.get('Content-Disposition')
     local = list(filter(lambda x: x.find('filename') > -1, local.split(';')))[0].split('=')[-1]
     with open(local, 'wb') as f:
-        for chunk in r.iter_content(chunk_size=1024): 
+        for chunk in r.iter_content(chunk_size=1024):
             if chunk:
                 f.write(chunk)
     print('>> File downloaded to ' + local)
     return local
-
 
 # ----- entities -----
 
@@ -147,6 +186,7 @@ def load_entity(typeid, entid):
     r = ses.get(url('entity_load'),
                 params={'type': str(typeid), 'id': str(entid)},
                 headers=headers)
+    print('<< Request: ' + r.url)
     print('>> Response: ' + r.text)
     return r
 
@@ -169,112 +209,169 @@ def query_entity(typeid, query=None, filter_=None, limit=None, offset=None, sort
     r = ses.get(url('entity_query'),
                 params=params,
                 headers=headers)
+    print('<< Request: ' + r.url)
     print('>> Response: ' + r.text)
     return r
 
 def insert_entity(typeid, name, responsible):
+    d = Data()
+
     name = Item('Name', str(name))
-    resp = Item('Responsible', None, [Item('Id', str(responsible))])
+    resp = Item('Responsible')
+    resp.data = Data(Item('Id', str(responsible)))
 
-    d['Items'].append(name)
-    d['Items'].append(resp)
+    d.add_items(name, resp)
 
-    jsn = get_json()
+    jsn = get_json(d)
 
     r = ses.post(url('entity_insert', typeid),
                 headers=headers,
                 data=jsn)
+    print('<< Request: ' + jsn)
     print('>> Response: ' + r.text)
     return r
 
 # ----- tasks -----
 
 # there aren't many existed arguments in command line -- look at http://88.87.81.251:1313/API/Help/Type?uid=298b2c71-619f-463c-95b2-8e029085680d
-def create_task(subject, executors, start, end, description, file_=None, file_id=None):
+def create_task(subject, executors, start_date, end_date, description=None, files=None, controler=None, upload=True):
+    d = Data()
+
+    # required arguments
     subj = Item('Subject', str(subject))
-    if type(executors) == type([]):
-        excr = Item('Executor', None, [Item('Id', str(ex)) for ex in executors])
-    else:
-        excr = Item('Executor', None, [Item('Id', str(executors))])
-    stdate = Item('StartDate', str(start))
-    endate = Item('EndDate', str(end))
-    desc = Item('Description', str(description))
-    if file_:
-        attach = Item('Attachments', None,
-                      dataarray=[Item('File', None, [Item('Uid', file_upload(file_))])])
-    if file_id:
-        attach = Item('Attachments', None,
-                      dataarray=[Item('File', None, [Item('Uid', file_id)])])
+    excr = Item('Executor', data=Data())
+    if type(executors) != list: executors = [executors]
+    for ex in executors:
+        excr.data.add_items(Item('Id', str(ex)))
+    strdate = Item('StartDate', str(start_date))
+    enddate = Item('EndDate', str(end_date))
 
-    d['Items'].append(subj)
-    d['Items'].append(excr)
-    d['Items'].append(stdate)
-    d['Items'].append(endate)
-    d['Items'].append(desc)
-    d['Items'].append(attach)
+    d.add_items(subj, excr, strdate, enddate)
 
-    jsn = get_json()
+    # optional arguments
+    if description:
+        desc = Item('Description', str(description))
+        d.add_items(desc)
+
+    if files:
+        attach = Item('Attachments', dataarray=DataArray())
+        if type(files) != list: files = [files]
+        for f in files:
+            attach.dataarray.add_datas(Data(Item('File', data=Data(Item('Uid', file_upload(f) if upload else f)))))
+        d.add_items(attach)
+
+    if controler:
+        cont = Item('ControlUser', data=Data())
+        if type(controler) != list: controler = [controler]
+        for con in controler:
+            cont.data.add_items(Item('Id', str(con)))
+        d.add_items(cont)
+
+    jsn = get_json(d)
 
     r = ses.post(url('task_create'),
                headers=headers,
                data=jsn)
+    print('<< Request: ' + jsn)
     print('>> Response: ' + r.text)
     return r
 
-def close_task(id, comment=''):
+def close_task(id, text=None, files=None, upload=True):
+    d = Data()
+
     task = Item('TaskId', str(id))
-    comm = Item('Comment', None, [Item('Text', str(comment))])
+    d.add_items(task)
 
-    d['Items'].append(task)
-    d['Items'].append(comm)
+    if text or files:
+        if not text: text = ''
+        com = Item('Comment')
+        com.data = Data(Item('Text', str(text)))
 
-    jsn = get_json()
+        if files:
+            attach = Item('Attachments', dataarray=DataArray())
+            if type(files) != list: files = [files]
+            for f in files:
+                attach.dataarray.add_datas(Data(Item('Uid', file_upload(f) if upload else f)))
+            com.data.add_items(attach)
+
+        d.add_items(com)
+
+    jsn = get_json(d)
 
     r = ses.post(url('task_close'),
                  headers=headers,
                  data=jsn)
+    print('<< Request: ' + jsn)
     print('>> Response: ' + r.text)
     return r
 
-def complete_task(id, comment=''):
+def complete_task(id, text=None, files=None, upload=True):
+    d = Data()
+
     task = Item('TaskId', str(id))
-    comm = Item('Comment', None, [Item('Text', str(comment))])
+    d.add_items(task)
 
-    d['Items'].append(task)
-    d['Items'].append(comm)
+    if text or files:
+        if not text: text = ''
+        com = Item('Comment')
+        com.data = Data(Item('Text', str(text)))
 
-    jsn = get_json()
+        if files:
+            attach = Item('Attachments', dataarray=DataArray())
+            if type(files) != list: files = [files]
+            for f in files:
+                attach.dataarray.add_datas(Data(Item('Uid', file_upload(f) if upload else f)))
+            com.data.add_items(attach)
+
+        d.add_items(com)
+
+    jsn = get_json(d)
 
     r = ses.post(url('task_complete'),
                  headers=headers,
                  data=jsn)
+    print('<< Request: ' + jsn)
     print('>> Response: ' + r.text)
     return r
 
-def add_comment(id, text, file_=None, file_id=None):
+def add_comment(id, text, files=None, upload=True):
+    d = Data()
+
     task = Item('TaskId', str(id))
-    if file_:
-        comm = Item('Comment', None,
-                    [Item('Text', str(text)),
-                     Item('Attachments', None,
-                          dataarray=[Item('Uid', file_upload(file_))]
-                   )])
-    elif file_id:
-        comm = Item('Comment', None,
-                    [Item('Text', str(text)),
-                     Item('Attachments', None,
-                          dataarray=[Item('Uid', file_id)]
-                   )])
-    else:
-        comm = Item('Comment', None, [Item('Text', str(text))])
+    d.add_items(task)
 
-    d['Items'].append(task)
-    d['Items'].append(comm)
+    com = Item('Comment')
+    com.data = Data(Item('Text', str(text)))
 
-    jsn = get_json()
+    if files:
+        attach = Item('Attachments', dataarray=DataArray())
+        if type(files) != list: files = [files]
+        for f in files:
+            attach.dataarray.add_datas(Data(Item('Uid', file_upload(f) if upload else f)))
+        com.data.add_items(attach)
+
+    d.add_items(com)
+
+    jsn = get_json(d)
 
     r = ses.post(url('add_comment'),
                  headers=headers,
                  data=jsn)
+    print('<< Request: ' + jsn)
+    print('>> Response: ' + r.text)
+    return r
+
+def mark_read(id):
+    d = Data()
+
+    task = Item('TaskId', str(id))
+    d.add_items(task)
+
+    jsn = get_json(d)
+
+    r = ses.post(url('task_read'),
+                 headers=headers,
+                 data=jsn)
+    print('<< Request: ' + jsn)
     print('>> Response: ' + r.text)
     return r
