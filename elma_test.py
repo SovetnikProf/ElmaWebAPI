@@ -362,6 +362,16 @@ def file_download(id):
 # ----- Объекты (IEntityService) -----
 
 def load_entity(typeid, entid):
+    """ Функция, получающая объект определенного типа с определенным ID.
+
+    Обязательные параметры:
+        typeid [str] : тип объекта
+
+        entid [str] : ID объекта
+
+    Возвращает:
+        [requests.models.Response] : объект, хранящий ответ сервера
+    """
     r = ses.get(url('entity_load'),
                 params={'type': str(typeid), 'id': str(entid)},
                 headers=headers)
@@ -370,6 +380,29 @@ def load_entity(typeid, entid):
     return r
 
 def query_entity(typeid, query=None, filter_=None, limit=None, offset=None, sort=None, filteruid=None, filterdata=None):
+    """ Функция, получающая выборку объектов определенного типа.
+
+    Обязательные параметры:
+        typeid [str] : тип объекта
+
+    Необязательные параметры:
+        query [str] : ???
+
+        filter_ [str] : ???
+
+        limit [str] : ???
+
+        offset [str] : ???
+
+        sort [str] : ???
+
+        filteruid [str] : ???
+
+        filterdata [str] : ???
+
+    Возвращает:
+        [requests.models.Response] : объект, хранящий ответ сервера
+    """
     params = {'type': str(typeid)}
     if query:
         params['q'] = str(query)
@@ -394,11 +427,26 @@ def query_entity(typeid, query=None, filter_=None, limit=None, offset=None, sort
     return r
 
 def insert_entity(typeid, name, responsible):
+    """ Функция, создающая объект определенного типа.
+
+    Обязательные параметры:
+        typeid [str] : тип объекта
+
+        name [str] : имя объекта
+
+        responsible [str] : id ответственного пользователя *
+
+    Возвращает:
+        [requests.models.Response] : объект, хранящий ответ сервера
+
+    * Функция тестировалась на создании контрагентов -- имя и ответственный
+      являются двумя обязательными параметрами при их создании.
+    """
     d = Data()
 
-    name = Item('Name', str(name))
+    name = Item('Name', name)
     resp = Item('Responsible')
-    resp.data = Data(Item('Id', str(responsible)))
+    resp.data = Data(Item('Id', responsible))
 
     d.add_items(name, resp)
 
@@ -411,67 +459,125 @@ def insert_entity(typeid, name, responsible):
     print('>> Response: ' + r.text)
     return r
 
-# ----- tasks -----
+# ----- Задачи (Tasks) -----
 
-# there aren't many existed arguments in command line -- look at http://88.87.81.251:1313/API/Help/Type?uid=298b2c71-619f-463c-95b2-8e029085680d
 def create_task(subject, executors, start_date, end_date, description=None, files=None, controler=None, upload=True):
+    """ Функция, создающая задачу.
+
+    Обязательные параметры:
+        subject [str] : тема задачи
+
+        executors [str / list(str)] : id / список id пользователей, являющихся
+                                      исполнителями задачи
+
+        start_date [str] : дата начала задачи
+
+        end_date [str] : дата окончания задачи
+
+    Необязательные параметры:
+        description [str] : описание задачи
+
+        files [str / list(str)] : наименование / список наименований   ИЛИ
+                                  Uid / список Uid файлов, приложенных к задаче
+
+        controler [str] : id пользователя, являющегося контролером исполнения
+
+        upload [bool] : если False, то переменная files будет рассматриваться
+                        как Uid / список Uid файлов (для прикрепления уже
+                        залитых файлов)
+    Возвращает:
+        [requests.models.Response] : объект, хранящий ответ сервера
+    """
+    # создаем тело запроса
     d = Data()
 
-    # required arguments
-    subj = Item('Subject', str(subject))
+    # обязательные параметры
+    subj = Item('Subject', subject)
+
     excr = Item('Executor', data=Data())
+    # если исполнитель один, обернуть в список для использования в цикле
     if type(executors) != list: executors = [executors]
     for ex in executors:
-        excr.data.add_items(Item('Id', str(ex)))
-    strdate = Item('StartDate', str(start_date))
-    enddate = Item('EndDate', str(end_date))
+        excr.data.add_items(Item('Id', ex))
 
+    strdate = Item('StartDate', start_date)
+    enddate = Item('EndDate', end_date)
+
+    # добавляем обязательные параметры в запрос
     d.add_items(subj, excr, strdate, enddate)
 
-    # optional arguments
+    # опциональные параметры
     if description:
-        desc = Item('Description', str(description))
+        desc = Item('Description', description)
         d.add_items(desc)
 
     if files:
         attach = Item('Attachments', dataarray=DataArray())
         if type(files) != list: files = [files]
         for f in files:
-            attach.dataarray.add_datas(Data(Item('File', data=Data(Item('Uid', file_upload(f) if upload else f)))))
+            # в задачах при прикреплении файлов Data должна быть обёрнута в
+            # дополнительный Item('File'), который обёрнут в еще одну Data
+            attach.dataarray.add_datas(Data(Item('File', data=Data(Item('Uid',
+                                       file_upload(f) if upload else f)))))
         d.add_items(attach)
 
     if controler:
         cont = Item('ControlUser', data=Data())
         if type(controler) != list: controler = [controler]
         for con in controler:
-            cont.data.add_items(Item('Id', str(con)))
+            cont.data.add_items(Item('Id', con))
         d.add_items(cont)
 
+    # запрос сформирован, преобразуем его в json
     jsn = get_json(d)
 
     print('<< Request: ' + jsn)
+    # посылаем запрос на сервер, ждем ответа
     r = ses.post(url('task_create'),
                headers=headers,
                data=jsn)
     print('>> Response: ' + r.text)
+    # возвращаем ответ сервера
     return r
 
 def close_task(id, text=None, files=None, upload=True):
+    """ Функция, закрывающая задачу.
+
+    Обязательные параметры:
+        id [str] : id задачи
+
+    Необязательные параметры:
+        text [str] : текст комментария
+
+        files [str / list(str)] : наименование / список наименований   ИЛИ
+                                  Uid / список Uid файлов, приложенных к комментарию
+
+        upload [bool] : если False, то переменная files будет рассматриваться
+                        как Uid / список Uid файлов (для прикрепления уже
+                        залитых файлов)
+    Возвращает:
+        [requests.models.Response] : объект, хранящий ответ сервера
+    """
     d = Data()
 
-    task = Item('TaskId', str(id))
+    task = Item('TaskId', id)
     d.add_items(task)
 
+    # если передан текст или файлы, то необходимо добавить в запрос комментарий
     if text or files:
+        # если переданы только файлы, то текст комментария оставляем пустым
         if not text: text = ''
         com = Item('Comment')
-        com.data = Data(Item('Text', str(text)))
+        com.data = Data(Item('Text', text))
 
         if files:
             attach = Item('Attachments', dataarray=DataArray())
             if type(files) != list: files = [files]
             for f in files:
-                attach.dataarray.add_datas(Data(Item('Uid', file_upload(f) if upload else f)))
+                # в отличие от задачи, для прикрепления файлов к комментарию их
+                # не нужно дополнительно оборачивать
+                attach.dataarray.add_datas(Data(Item('Uid',
+                                           file_upload(f) if upload else f)))
             com.data.add_items(attach)
 
         d.add_items(com)
@@ -486,15 +592,32 @@ def close_task(id, text=None, files=None, upload=True):
     return r
 
 def complete_task(id, text=None, files=None, upload=True):
+    """ Функция, выполняющая задачу.
+
+    Обязательные параметры:
+        id [str] : id задачи
+
+    Необязательные параметры:
+        text [str] : текст комментария
+
+        files [str / list(str)] : наименование / список наименований   ИЛИ
+                                  Uid / список Uid файлов, приложенных к комментарию
+
+        upload [bool] : если False, то переменная files будет рассматриваться
+                        как Uid / список Uid файлов (для прикрепления уже
+                        залитых файлов)
+    Возвращает:
+        [requests.models.Response] : объект, хранящий ответ сервера
+    """
     d = Data()
 
-    task = Item('TaskId', str(id))
+    task = Item('TaskId', id)
     d.add_items(task)
 
     if text or files:
         if not text: text = ''
         com = Item('Comment')
-        com.data = Data(Item('Text', str(text)))
+        com.data = Data(Item('Text', text))
 
         if files:
             attach = Item('Attachments', dataarray=DataArray())
@@ -515,13 +638,30 @@ def complete_task(id, text=None, files=None, upload=True):
     return r
 
 def add_comment(id, text, files=None, upload=True):
+    """ Функция, добавляющая комментарий к определенной задаче.
+
+    Обязательные параметры:
+        id [str] : id задачи
+
+        text [str] : текст комментария
+
+    Необязательные параметры:
+        files [str / list(str)] : наименование / список наименований   ИЛИ
+                                  Uid / список Uid файлов, приложенных к комментарию
+
+        upload [bool] : если False, то переменная files будет рассматриваться
+                        как Uid / список Uid файлов (для прикрепления уже
+                        залитых файлов)
+    Возвращает:
+        [requests.models.Response] : объект, хранящий ответ сервера
+    """
     d = Data()
 
-    task = Item('TaskId', str(id))
+    task = Item('TaskId', id)
     d.add_items(task)
 
     com = Item('Comment')
-    com.data = Data(Item('Text', str(text)))
+    com.data = Data(Item('Text', text))
 
     if files:
         attach = Item('Attachments', dataarray=DataArray())
@@ -542,9 +682,17 @@ def add_comment(id, text, files=None, upload=True):
     return r
 
 def mark_read(id):
+    """ Функция, помечающая задачу как прочитанную.
+
+    Обязательные параметры:
+        id [str] : id задачи
+
+    Возвращает:
+        [requests.models.Response] : объект, хранящий ответ сервера
+    """
     d = Data()
 
-    task = Item('TaskId', str(id))
+    task = Item('TaskId', id)
     d.add_items(task)
 
     jsn = get_json(d)
@@ -556,9 +704,22 @@ def mark_read(id):
     print('>> Response: ' + r.text)
     return r
 
-# ----- processes -----
+# ----- Процессы (Workflow) -----
 
 def make_context(**kwargs):
+    """ Вспомогательная функция, выстраивающая Data по словарю аргументов.
+
+    Например,
+        make_context(key1='value1', key2=Data(Item('name', 'value')))
+    создаст объект Data, преобразующийся в следующий json:
+        {"Items": [{"Name": "key1", "Value": "value1"},
+                   {"Data": {"Items": [{"Name": "name", "Value": "value"}]},
+                    "Name": "key2", "Value": "None"}
+                  ]}
+
+    Возвращает:
+        [Data] : созданный объект данных
+    """
     c = Data()
     for key in kwargs:
         i = Item(key)
@@ -571,19 +732,31 @@ def make_context(**kwargs):
         c.add_items(i)
     return c
 
-# pass files without File Item
-def start_process(name, context, process_token=None, process_header=None):
+def start_process(name, context, process_token, process_header=None):
+    """ Функция, запускающая бизнес-процесс.
+
+    Обязательные параметры:
+        name [str] : имя экземпляра процесса
+
+        context [Data] : переменные контекста процесса
+
+        process_token [str] : токен процесса
+
+    Необязательные параметры:
+        process_header [str] : ???
+
+    Возвращает:
+        [requests.models.Response] : объект, хранящий ответ сервера
+    """
     d = Data()
 
-    proc = Item('ProcessName', str(name))
+    proc = Item('ProcessName', name)
     cont = Item('Context', data=context)
-    d.add_items(proc, cont)
+    ptok = Item('ProcessToken', process_token)
+    d.add_items(proc, cont, ptok)
 
-    if process_token:
-        ptok = Item('ProcessToken', str(process_token))
-        d.add_items(ptok)
     if process_header:
-        phid = Item('ProcessHeaderId', str(process_header))
+        phid = Item('ProcessHeaderId', process_header)
         d.add_items(phid)
 
     jsn = get_json(d)
@@ -596,9 +769,17 @@ def start_process(name, context, process_token=None, process_header=None):
     return r
 
 def process_status(token):
+    """ Функция, проверяющая статус исполнения бизнес-процесса.
+
+    Обязательные параметры:
+        token [str] : токен экземпляра бизнес-процесса
+
+    Возвращает:
+        [requests.models.Response] : объект, хранящий ответ сервера
+    """
     d = Data()
 
-    etok = Item('ExecutionToken', str(token))
+    etok = Item('ExecutionToken', token)
     d.add_items(etok)
 
     jsn = get_json(d)
@@ -610,14 +791,18 @@ def process_status(token):
     print('>> Response: ' + r.text)
     return r
 
-if __name__ == '__main__':
-    l = login(username, password)
-    l = l.json()
+# ~~~~~~ При запуске как скрипт ~~~~~~ #
 
+if __name__ == '__main__':
+    # логинимся за пользователя
+    l = login(username, password)
+
+    # вытаскиваем нужные параметры, прописываем в заголовок токен авторизации
     try:
-        auth_token = l['AuthToken']
-        session_token = l['SessionToken']
-        current_user = l['CurrentUserId']
+        auth_token = l.json()['AuthToken']
+        session_token = l.json()['SessionToken']
+        current_user = l.json()['CurrentUserId']
         headers['AuthToken'] = auth_token
+    # если не залогинились -- выводим ошибку
     except KeyError:
         raise Exception('Failed to log in!')
