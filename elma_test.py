@@ -5,7 +5,7 @@ from jsonpickle import encode as json_encode
 from re import search as re_search
 from copy import copy
 from datetime import datetime
-from urllib.parse import quote_plus # from urllib import quote_plus в python2
+from urllib.parse import quote_plus, unquote_plus # from urllib import quote_plus в python2
 
 # токен приложения
 app_token = '132D5D0E49B0D30528CB4FEF5FA1FED73FC0DB202C0C1102EE0778B13446A2D89F213BB8BB09BEF22DD09635CBEAF6805E1CEEBD3BA10D844FE635AECE90CA8B'
@@ -339,12 +339,17 @@ def file_download(id):
 
     # получаем имя файла из заголовка 'Content-Disposition'
     local = r.headers.get('Content-Disposition')
+    print(local)
     try:
         # внутри, помимо имени файла, имеется другая информация, поэтому
         # вырезаем часть с нужной информацией
         local = re_search(r'filename=(?P<fname>.*)?;', local).group('fname')
     except:
-        local = 'downloaded'
+        try:
+            local = re_search(r'filename.*?\'\'(?P<fname>.*)', local).group('fname')
+            local = unquote_plus(local)
+        except:
+            local = 'downloaded'
     with open(local, 'wb') as f:
         for chunk in r.iter_content(chunk_size=1024):
             # чанк за чанком пишем в файл
