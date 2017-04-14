@@ -409,14 +409,14 @@ def mark_read(id):
 def make_context(**kwargs):
     c = Data()
     for key in kwargs:
-        c = Item(key)
+        i = Item(key)
         if type(kwargs[key]) == Data:
-            c.data = kwargs[key]
+            i.data = kwargs[key]
         elif type(kwargs[key]) == DataArray:
-            c.dataarray = kwargs[key]
+            i.dataarray = kwargs[key]
         else:
-            c.value = kwargs[key]
-        c.add_items(kwargs[key])
+            i.value = kwargs[key]
+        c.add_items(i)
     return c
 
 def start_process(name, context, process_token=None, process_header=None):
