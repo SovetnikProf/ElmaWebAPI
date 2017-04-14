@@ -1,18 +1,31 @@
 #!/usr/bin/python3
 
 import requests as req
-import jsonpickle
+from jsonpickle import encode as json_encode
+from re import search as re_search
 from copy import copy
-from datetime import datetime, timedelta
+from datetime import datetime
+from urllib.parse import quote_plus # from urllib import quote_plus в python2
 
+# токен приложения
 app_token = '132D5D0E49B0D30528CB4FEF5FA1FED73FC0DB202C0C1102EE0778B13446A2D89F213BB8BB09BEF22DD09635CBEAF6805E1CEEBD3BA10D844FE635AECE90CA8B'
+# логин пользователя
 username = 'ia.chechetkin'
+# пароль пользователя
 password = '123'
+# хост, на котором размещается Elma (обязательно должен начинаться с протокола)
 host = 'http://88.87.81.251:1313/API/REST/'
 
-# ----- some definitions -----
+# для тестов: токен класса вложений
+ATTACHMENT_TOKEN = 'd4553858-96c6-4ed5-87dd-7a0429bf5cf3'
+# для тестов: токен тестового бизнес-процесса
+PROCESS_TOKEN = '381769ca-715b-4bf5-9806-6d43423f67f3'
 
-# dictionary of urls to shorten requests
+
+# ~~~~~~ некоторые определения ~~~~~~ #
+
+
+# словарь url для сокращения запросов в коде
 urls = {'auth_login': 'Authorization/LoginWith',
         'auth_time': 'Authorization/ServerTime',
 
@@ -35,24 +48,46 @@ urls = {'auth_login': 'Authorization/LoginWith',
         'process_status': 'Workflow/ExecuteUserTaskStatus'
        }
 
-# in-code url shortener
 def url(key, value=None):
+    """ Возвращает полный url, взяв значения по ключу key из словаря urls.
+        Опциональный аргумент value используется для добавления после
+        основного url.
+    """
     return host + urls[key] + ('/{}'.format(value) if value else '')
 
-# making session
+# создаем сессию, в которой будем работать
 ses = req.Session()
 
-# definitions for auth
+# переменные для запросов
+# заголовки запросов
 headers = {'ApplicationToken': app_token,
            'Content-Type': 'application/json; charset=utf-8'}
+# токен авторизации, изменять значение этой переменной после логина
 auth_token = None
+# токен сессии, изменять значение этой переменной после логина
 session_token = None
+# ID текущего пользователя, изменять значение этой переменной после логина
 current_user = None
 
-# Web-API Data Item
 class Item:
+    """ Web-API Data Item -- основной объект для использования в теле запроса.
+
+    Представление в json:
+        Item = {'Name': str, 'Value': str, 'Data': Data, 'DataArray': DataArray}
+
+    Обязательные параметры:
+        name [str] : Название объекта
+
+    Необязательные параметры (как правило в объекте используется один из трёх):
+        value [str] : Значение в объекте
+
+        data [Web-API Item List] : Передаваемые данные в объекте
+
+        dataarray [Web-API Data List] : Список передаваемых данных в объекте
+                                        (в справке помечается как "[i]")
+    """
     def __init__(self, name, value=None, data=None, dataarray=None):
-        self.Name = name
+        self.name = name
         self.value = value
         if data is not None:
             self.data = data
@@ -60,18 +95,26 @@ class Item:
             self.dataarray = dataarray
 
     @property
+    def name(self):
+        return self.Name
+    @name.setter
+    def name(self, val):
+        self.Name = str(val)
+
+    @property
     def value(self):
         return self.Value
     @value.setter
     def value(self, val):
-        self.Value = val
+        self.Value = str(val)
 
     @property
     def data(self):
         return self.Data
     @data.setter
     def data(self, val):
-        if type(val) != Data: raise Exception('Type of data must be Data, not {}'.format(type(val)))
+        if type(val) != Data:
+            raise Exception('Type of data must be Data, not {}'.format(type(val)))
         self.Data = val
 
     @property
@@ -79,14 +122,22 @@ class Item:
         return self.DataArray
     @dataarray.setter
     def dataarray(self, val):
-        if type(val) != DataArray: raise Exception('Type of dataarray must be DataArray, not {}'.format(type(val)))
+        if type(val) != DataArray:
+            raise Exception('Type of dataarray must be DataArray, not {}'.format(type(val)))
         self.DataArray = val
 
     def __str__(self):
-        return str(self.__dict__)
+        return get_json(self)
 
-# Web-API Item List
 class Data:
+    """ Web-API Item List -- вспомогательный объект для описания Item.data.
+
+    Представление в json:
+        Data = {'Items': [Item, Item, ...]}
+
+    Встроенные методы:
+        add_items(*args) : добавляет элементы args в коллекцию Items
+    """
     def __init__(self, *args):
         self.Items = []
         for item in args:
@@ -97,10 +148,18 @@ class Data:
             self.Items.append(item)
 
     def __str__(self):
-        return str(self.__dict__)
+        return get_json(self)
 
-# Web-API List of Items Lists
 class DataArray(list):
+    """ Web-API Data List -- вспомогательный объект для описания Item.dataarray,
+        отнаследован от списка для корректного представления в json.
+
+    Представление в json:
+        DataArray = [Data, Data, ...]
+
+    Встроенные методы:
+        add_datas(*args) : добавляет элементы args в список.
+    """
     def add_datas(self, *args):
         for data in args:
             self.append(data)
@@ -109,24 +168,60 @@ class DataArray(list):
         for data in args:
             self.append(data)
 
-# returns list of dictionaries built on every 'Items' element
-# used for easy getting parameters: instead of use 'Name' filter on ['Items'][#] use get_dict[#][Name] to get data from parameter
+    def __str__(self):
+        return get_json(self)
+
 def get_dict(json_):
+    """ Возвращает список словарей, построенных на вовращаемом Elm-ой json-е.
+        Поскольку возвращаемый json по сути представляет собой json
+        элемента Data * (или DataArray), то для более удобного поиска значений
+        используется эта функция.
+
+        Например, следующий список
+            [{"Items": [{"Name": "Uid", "Value": "token", "Data": {}, "DataArray": []}]}]
+        будет преобразован в
+            [{'Uid': {'Value': 'token', 'DataArray': [], 'Data': {}}}]}]
+        и значение свойства Uid можно получить через ключ
+            s[0]['Uid'] = {'Value': 'token', 'Data': {}, 'DataArray': []}
+
+        * Здесь речь о Item, Data и DataArray идет не как о классах, а как о
+          структурах данных (их json-представлениях), используемых Elm-ой.
+    """
     results = []
+    # поскольку функция одна и для получаемого json DataArray, и для json Data,
+    # то проверяем тип входного параметра -- на входе должен быть список.
     if type(json_) != list: json_ = [json_]
     for el in json_:
+        # для каждого элемента Data в DataArray создаем словарь
         results.append({})
         for i in el['Items']:
+            # для каждого Item внутри Data создаем позицию в словаре, ключ
+            # которой -- значение свойства 'Name', а значение -- элемент Item
+            # за исключением свойства 'Name' (дабы избежать дублирования данных)
             results[-1][i['Name']] = copy(i)
             results[-1][i['Name']].pop('Name', None)
     return results
 
-# alias for jsonpickle function
 def get_json(d):
-    return jsonpickle.encode(d, unpicklable=False)
+    """ Псевдоним для функции jsonpickle.encode. """
+    return json_encode(d, unpicklable=False)
 
-# pretty alias for datetime().strtime
 def date(day=None, month=None, year=None, hour=None, minute=None, now=False):
+    """ Псевдоним для datetime().strtime. Возвращает строковое представление даты.
+
+    Необязательные параметры:
+        day [int] (1 <= day <= 31) : день месяца (стандартное значение -- сегодня)
+
+        month [int] (1 <= month <= 12) : месяц (стандартное значение -- текущий месяц)
+
+        year [int] (0 < year) : год (стандартное значение -- текущий год)
+
+        hour [int] (0 <= hour <= 23) : час  (стандартное значение -- 8 утра)
+
+        minute [int] (0 <= minute <= 59) : минута (стандартное значение -- 0)
+
+        now [bool] : если True, будет использовано текущее время
+    """
     if now:
         return datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     else:
@@ -137,16 +232,28 @@ def date(day=None, month=None, year=None, hour=None, minute=None, now=False):
         if not year:
             year = datetime.now().year
         if not hour:
-            hour = 12
+            hour = 8
         if not minute:
             minute = 0
         return datetime(day=day, month=month, year=year, hour=hour, minute=minute).strftime('%Y-%m-%d %H:%M:%S')
 
-# ~~ Working Functions ~~ #
 
-# ----- auth -----
+# ~~~~~~ Обертка функций API ~~~~~~ #
+
+
+# ----- Авторизация (IAuthorizationService) -----
 
 def login(username, password):
+    """ Авторизация по логину и паролю.
+
+    Обязательные параметры:
+        username [str] : логин пользователя
+
+        password [str] : пароль пользователя
+
+    Возвращает:
+        [requests.models.Response] : объект, хранящий ответ сервера
+    """
     r = ses.post(url('auth_login'),
                  params={'username': username},
                  headers=headers,
@@ -156,19 +263,38 @@ def login(username, password):
     return r
 
 def server_time():
+    """ Функция получения серверного времени. Поскольку для этого требуется
+        авторизация, то можно через промежуток времени запускать эту функцию для
+        получения текущего состояния авторизации, а при получении 401 ошибки
+        получать новый токен авторизации.
+
+    Возвращает:
+        [requests.models.Response] : объект, хранящий ответ сервера
+    """
     r = ses.get(url('auth_time'),
                 headers=headers)
     print('<< Request: ' + r.url)
     print('>> Server time: ' + r.text)
     return r
 
-# ----- files -----
+# ----- Файлы (IFilesService) -----
 
 def file_upload(file_):
+    """ Функция загрузки файла на сервер. Данный сервис заливает файл не как
+        объект "File", а как объект вложения "Attachment".
+    
+    Обязательные параметры:
+        file_ [str] : путь к файлу
+
+    Возвращает:
+        [str] : Uid загруженного файла
+    """
     headers_ = headers
-    headers_['FileName'] = file_.split('/')[-1]
+    headers_['FileName'] = quote_plus(file_.split('/')[-1])
     headers_['Content-Type'] = 'application/json'
 
+    # файл должен передаваться в потоке, поэтому используем оператор with
+    # открываем файл в байтовом режиме 'b'
     with open(file_, 'rb') as f:
         r = ses.post(url('file_upload'),
                     headers=headers_,
@@ -181,6 +307,14 @@ def file_upload(file_):
     return id
 
 def file_size(id):
+    """ Функция, определяющая размер файла на сервере по его Uid.
+
+    Обязательные параметры:
+        id [str] : Uid файла, размер которого нужно узнать
+
+    Возвращает:
+        [requests.models.Response] : объект, хранящий ответ сервера
+    """
     r = ses.get(url('file_size'),
                 params={'uid': str(id)},
                 headers=headers)
@@ -189,25 +323,38 @@ def file_size(id):
     return r
 
 def file_download(id):
-    size = file_size(id)
+    """ Функция, скачивающая файл с сервера по его Uid.
 
+    Обязательные параметры:
+        id [str] : Uid файла, размер которого нужно узнать
+
+    Возвращает:
+        [str] : локальное имя файла
+    """
     r = ses.get(url('file_download'),
                  params={'uid': str(id)},
                  headers=headers,
                  stream=True)
     print('<< Request: ' + r.url)
 
+    # получаем имя файла из заголовка 'Content-Disposition'
     local = r.headers.get('Content-Disposition')
-    local = list(filter(lambda x: x.find('filename') > -1, local.split(';')))[0].split('=')[-1]
+    try:
+        # внутри, помимо имени файла, имеется другая информация, поэтому
+        # вырезаем часть с нужной информацией
+        local = re_search(r'filename=(?P<fname>.*)?;', local).group('fname')
+    except:
+        local = 'downloaded'
     with open(local, 'wb') as f:
         for chunk in r.iter_content(chunk_size=1024):
+            # чанк за чанком пишем в файл
             if chunk:
                 f.write(chunk)
 
     print('>> File downloaded to ' + local)
     return local
 
-# ----- entities -----
+# ----- Объекты (IEntityService) -----
 
 def load_entity(typeid, entid):
     r = ses.get(url('entity_load'),
@@ -419,6 +566,7 @@ def make_context(**kwargs):
         c.add_items(i)
     return c
 
+# pass files without File Item
 def start_process(name, context, process_token=None, process_header=None):
     d = Data()
 
