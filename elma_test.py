@@ -15,7 +15,7 @@ urls = {'auth': 'Authorization/LoginWith',
         'task_close': 'Tasks/Close',
         'task_complete': 'Tasks/Complete',
         'task_read': 'Tasks/MarkRead',
-        'add_comment': 'Tasks/AddComment',
+        'comment_add': 'Tasks/AddComment',
 
         'entity_load': 'Entity/Load',
         'entity_query': 'Entity/Query',
@@ -24,7 +24,9 @@ urls = {'auth': 'Authorization/LoginWith',
 
         'file_upload': 'Files/Upload',
         'file_download': 'Files/Download',
-        'file_size': 'Files/FileSize'
+        'file_size': 'Files/FileSize',
+
+        'process_start': 'Workflow/StartProcessAsync'
        }
 
 def url(key, value=None):
@@ -149,7 +151,6 @@ def file_upload(file_):
     headers_['Content-Type'] = 'application/json'
 
     with open(file_, 'rb') as f:
-        #data = f.read().encode('utf-8')
         r = ses.post(url('file_upload'),
                     headers=headers_,
                     data=f)
@@ -224,10 +225,10 @@ def insert_entity(typeid, name, responsible):
 
     jsn = get_json(d)
 
+    print('<< Request: ' + jsn)
     r = ses.post(url('entity_insert', typeid),
                 headers=headers,
                 data=jsn)
-    print('<< Request: ' + jsn)
     print('>> Response: ' + r.text)
     return r
 
@@ -269,10 +270,10 @@ def create_task(subject, executors, start_date, end_date, description=None, file
 
     jsn = get_json(d)
 
+    print('<< Request: ' + jsn)
     r = ses.post(url('task_create'),
                headers=headers,
                data=jsn)
-    print('<< Request: ' + jsn)
     print('>> Response: ' + r.text)
     return r
 
@@ -298,10 +299,10 @@ def close_task(id, text=None, files=None, upload=True):
 
     jsn = get_json(d)
 
+    print('<< Request: ' + jsn)
     r = ses.post(url('task_close'),
                  headers=headers,
                  data=jsn)
-    print('<< Request: ' + jsn)
     print('>> Response: ' + r.text)
     return r
 
@@ -327,10 +328,10 @@ def complete_task(id, text=None, files=None, upload=True):
 
     jsn = get_json(d)
 
+    print('<< Request: ' + jsn)
     r = ses.post(url('task_complete'),
                  headers=headers,
                  data=jsn)
-    print('<< Request: ' + jsn)
     print('>> Response: ' + r.text)
     return r
 
@@ -354,10 +355,10 @@ def add_comment(id, text, files=None, upload=True):
 
     jsn = get_json(d)
 
-    r = ses.post(url('add_comment'),
+    print('<< Request: ' + jsn)
+    r = ses.post(url('comment_add'),
                  headers=headers,
                  data=jsn)
-    print('<< Request: ' + jsn)
     print('>> Response: ' + r.text)
     return r
 
@@ -369,9 +370,47 @@ def mark_read(id):
 
     jsn = get_json(d)
 
+    print('<< Request: ' + jsn)
     r = ses.post(url('task_read'),
                  headers=headers,
                  data=jsn)
+    print('>> Response: ' + r.text)
+    return r
+
+# ----- processes -----
+
+def make_context(**kwargs):
+    c = Data()
+    for key in kwargs:
+        c = Item(key)
+        if type(kwargs[key]) == Data:
+            c.data = kwargs[key]
+        elif type(kwargs[key]) == DataArray:
+            c.dataarray = kwargs[key]
+        else:
+            c.value = kwargs[key]
+        c.add_items(kwargs[key])
+    return c
+
+def start_process(name, context, process_token=None, process_header=None):
+    d = Data()
+
+    proc = Item('ProcessName', str(name))
+    cont = Item('Context', data=context)
+    d.add_items(proc, cont)
+
+    if process_token:
+        ptok = Item('ProcessToken', str(process_token))
+        d.add_items(ptok)
+    if process_header:
+        phid = Item('ProcessHeaderId', str(process_header))
+        d.add_items(phid)
+
+    jsn = get_json(d)
+
     print('<< Request: ' + jsn)
+    r = ses.post(url('process_start'),
+                 headers=headers,
+                 data=jsn)
     print('>> Response: ' + r.text)
     return r
