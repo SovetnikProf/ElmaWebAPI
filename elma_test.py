@@ -49,16 +49,17 @@ urls = {'auth_login': 'Authorization/LoginWith',
        }
 
 def url(key, value=None):
-    """ Возвращает полный url, взяв значения по ключу key из словаря urls.
+    """ Возвращает полный текст url, взяв значения по ключу key из словаря urls.
         Опциональный аргумент value используется для добавления после
         основного url.
     """
     return host + urls[key] + ('/{}'.format(value) if value else '')
 
-# создаем сессию, в которой будем работать
+# создаем сессию, в которой будем работать, записываем её в переменную ses
+# в дальнейшем все запросы идут через сессию ses
 ses = req.Session()
 
-# переменные для запросов
+# объявляем переменные для запросов
 # заголовки запросов
 headers = {'ApplicationToken': app_token,
            'Content-Type': 'application/json; charset=utf-8'}
@@ -236,6 +237,26 @@ def date(day=None, month=None, year=None, hour=None, minute=None, now=False):
         if not minute:
             minute = 0
         return datetime(day=day, month=month, year=year, hour=hour, minute=minute).strftime('%Y-%m-%d %H:%M:%S')
+
+def auto_login(usr, pwd):
+    """ Функция для автоматического логина. Перезаписывает значения нужных
+        переменных.
+    """
+    # подключаем глобальные переменные
+    global auth_token, session_token, current_user, headers
+    # логинимся за пользователя
+    l = login(usr, pwd)
+
+    # вытаскиваем нужные параметры, прописываем в заголовок токен авторизации
+    try:
+        auth_token = l.json()['AuthToken']
+        session_token = l.json()['SessionToken']
+        current_user = l.json()['CurrentUserId']
+        headers['AuthToken'] = auth_token
+    # если не залогинились -- выводим ошибку
+    except KeyError:
+        raise Exception('Failed to log in!')
+    return l
 
 
 # ~~~~~~ Обертка функций API ~~~~~~ #
@@ -791,18 +812,9 @@ def process_status(token):
     print('>> Response: ' + r.text)
     return r
 
+
 # ~~~~~~ При запуске как скрипт ~~~~~~ #
 
-if __name__ == '__main__':
-    # логинимся за пользователя
-    l = login(username, password)
 
-    # вытаскиваем нужные параметры, прописываем в заголовок токен авторизации
-    try:
-        auth_token = l.json()['AuthToken']
-        session_token = l.json()['SessionToken']
-        current_user = l.json()['CurrentUserId']
-        headers['AuthToken'] = auth_token
-    # если не залогинились -- выводим ошибку
-    except KeyError:
-        raise Exception('Failed to log in!')
+if __name__ == '__main__':
+    auto_login(username, password)
