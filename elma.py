@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
+from __future__ import unicode_literals
+
 from sys import version_info
 if version_info.major > 2:
     from urllib.parse import quote_plus, unquote_plus
 else:
-    from __future__ import unicode_literals
     from urllib import quote_plus, unquote_plus
 
 import requests as req
@@ -105,7 +106,7 @@ class Data:
         for item in args:
             self.Items.append(item)
 
-    def __unicode__(self):
+    def __repr__(self):
         return get_json(self)
 
 class DataArray(list):
@@ -126,7 +127,7 @@ class DataArray(list):
         for data in args:
             self.append(data)
 
-    def __unicode__(self):
+    def __repr__(self):
         return get_json(self)
 
 def get_dict(json_):
@@ -218,6 +219,9 @@ class ELMA(object):
         self.session_token = None
         # ID текущего пользователя, изменять значение этой переменной после логина
         self.current_user = None
+
+    def __repr__(self):
+        return get_json(self)
 
     # ~~~~~~ Обертка функций API ~~~~~~ #
 
