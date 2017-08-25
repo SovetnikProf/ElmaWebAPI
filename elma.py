@@ -19,7 +19,7 @@ ATTACHMENT_TOKEN = 'd4553858-96c6-4ed5-87dd-7a0429bf5cf3'
 #             токен тестового бизнес-процесса
 PROCESS_TOKEN = '381769ca-715b-4bf5-9806-6d43423f67f3'
 #             токен класса контрагентов
-CONTRACTOR_TOKEN = '73bf0874-4f9d-4e5a-a1f9-0b44c9a5aa88'
+CONTRACTOR_TOKEN = '3325eab1-fe46-4900-a617-c6fb54ac24c0'
 #             токен класса группы пользователей
 USERGROUP_TOKEN = 'cf104645-72b9-4ef6-866c-8add9312fd9d'
 
@@ -149,16 +149,30 @@ def get_dict(json_):
     results = []
     # поскольку функция одна и для получаемого json DataArray, и для json Data,
     # то проверяем тип входного параметра -- на входе должен быть список.
-    if type(json_) != list: json_ = [json_]
-    for el in json_:
-        # для каждого элемента Data в DataArray создаем словарь
-        results.append({})
-        for i in el['Items']:
+    def make_list(data):
+        k = {}
+        for i in data['Items']:
             # для каждого Item внутри Data создаем позицию в словаре, ключ
             # которой -- значение свойства 'Name', а значение -- элемент Item
             # за исключением свойства 'Name' (дабы избежать дублирования данных)
-            results[-1][i['Name']] = copy(i)
-            results[-1][i['Name']].pop('Name', None)
+            k[i['Name']] = copy(i)
+            k[i['Name']].pop('Name', None)
+            if k[i['Name']]['Data'] != None:
+                k[i['Name']]['Data'] = make_list(k[i['Name']]['Data'])
+            if k[i['Name']]['DataArray'] != []:
+                l = []
+                for j in k[i['Name']]['DataArray']:
+                    l.append(make_list(j))
+                k[i['Name']]['DataArray'] = l
+        return k
+
+
+    if type(json_) != list: json_ = [json_]
+
+    for el in json_:
+        # для каждого элемента Data в DataArray создаем словарь
+        results.append(make_list(el))
+
     return results
 
 def get_json(d):
@@ -228,7 +242,7 @@ class ELMA(object):
 
     # ----- Авторизация (IAuthorizationService) -----
 
-    def login(self, username='', password=''):
+    def login(self, username='', password='', save_auth=True):
         """ Авторизация по имени пользователя и паролю.
         Две возможности задания параметров: либо при вызове функции,
         либо при создании экземпляра класса.
@@ -244,12 +258,16 @@ class ELMA(object):
         usr, pwd = '', ''
         if username:
             usr = username
+            if save_auth:
+                self.username = username
         elif self.username:
             usr = self.username
         else:
             raise Exception('Elma[login]: No username given')
         if password:
             pwd = password
+            if save_auth:
+                self.password = password
         elif self.password:
             pwd = self.password
         else:
@@ -265,7 +283,7 @@ class ELMA(object):
             print('>> Response: ' + r.text)
         return r
 
-    def auto_login(self, username='', password=''):
+    def auto_login(self, username='', password='', save_auth=True):
         """ Функция для автоматического логина. Перезаписывает значения нужных
             переменных.
         """
@@ -284,7 +302,7 @@ class ELMA(object):
             raise Exception('Elma[auto_login]: No password given')
 
         # логинимся за пользователя
-        r = self.login(usr, pwd)
+        r = self.login(usr, pwd, save_auth)
         if not self.silent:
             print(r.text)
 
