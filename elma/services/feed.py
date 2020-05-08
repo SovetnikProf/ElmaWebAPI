@@ -1,0 +1,2 @@
+
+class FeedService: pass
