@@ -6,6 +6,7 @@ import requests
 
 
 LOGIN_WITH = "/API/REST/Authorization/LoginWith"
+SERVER_TIME = "/API/REST/Authorization/ServerTime"
 
 
 class AuthService(Service):
@@ -30,5 +31,16 @@ class AuthService(Service):
         except requests.RequestException:
             raise ConnectionError(response.text)
 
-    def ServerTime(self, session):
-        pass
+    @needs_auth
+    @get(url=SERVER_TIME)
+    def ServerTime(self, result: requests.Response) -> datetime:
+        # result.json() == "/Date(1234567890123+0300)/"
+        time: str = result.json().strip("/").replace("Date(", "").replace(")", "")
+        char = "+" if "+" in time else "-"
+        ts, tz = time.split("+")
+
+        ts = int(ts) / 1000.0  # python timestamp is 1234567890.123
+        tz = datetime.strptime(f"{char}{tz}", "%z").tzinfo
+
+        dt = datetime.fromtimestamp(ts, tz=tz)
+        return dt
