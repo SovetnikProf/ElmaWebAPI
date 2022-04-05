@@ -1,6 +1,18 @@
-class EntityService:
-    def Load(self): pass
-    def Count(self): pass
-    def Query(self): pass
-    def Insert(self): pass
-    def Update(self): pass
+from .common import Service
+
+
+class EntityService(Service):
+    def Load(self):
+        pass
+
+    def Count(self):
+        pass
+
+    def Query(self):
+        pass
+
+    def Insert(self):
+        pass
+
+    def Update(self):
+        pass

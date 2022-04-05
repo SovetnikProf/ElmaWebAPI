@@ -1,2 +1,5 @@
+from .common import Service
 
-class TaskService: pass
+
+class TaskService(Service):
+    pass

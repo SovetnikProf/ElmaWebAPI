@@ -1,2 +1,5 @@
+from .common import Service
 
-class FeedService: pass
+
+class FeedService(Service):
+    pass

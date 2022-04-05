@@ -1,1 +1,5 @@
-class WorkflowService: pass
+from .common import Service
+
+
+class WorkflowService(Service):
+    pass
