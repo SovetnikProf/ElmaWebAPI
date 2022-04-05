@@ -1,7 +1,6 @@
 import requests
 
-from .common import Service
-
+from .base import Service
 
 class AuthService(Service):
     def LoginWithUserName(self, username, password, app_token) -> dict:

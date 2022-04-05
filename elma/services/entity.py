@@ -1,4 +1,4 @@
-from .common import Service
+from .base import Service
 
 
 class EntityService(Service):
