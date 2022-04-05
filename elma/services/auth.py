@@ -1,6 +1,12 @@
+from .base import Service
+from .decorators import needs_auth, get
+
+from datetime import datetime
 import requests
 
-from .base import Service
+
+LOGIN_WITH = "/API/REST/Authorization/LoginWith"
+
 
 class AuthService(Service):
     def LoginWithUserName(self, username, password, app_token) -> dict:
@@ -9,9 +15,7 @@ class AuthService(Service):
         session = requests.Session()
         session.headers = headers
 
-        response = session.post(
-            f"{self.host}/API/REST/Authorization/LoginWith", params={"username": username}, data=password
-        )
+        response = session.post(f"{self.host}/{LOGIN_WITH.lstrip('/')}", params={"username": username}, data=password)
 
         try:
             parsed = response.json()
@@ -22,7 +26,7 @@ class AuthService(Service):
                 "SessionToken": parsed["SessionToken"],
             }
             self.headers = new_headers
-            return headers
+            return new_headers
         except requests.RequestException:
             raise ConnectionError(response.text)
 
