@@ -1,5 +1,4 @@
-from .base import Service
-from .decorators import needs_auth, get
+from . import base, decorators
 
 from datetime import datetime
 import requests
@@ -9,7 +8,7 @@ LOGIN_WITH = "/API/REST/Authorization/LoginWith"
 SERVER_TIME = "/API/REST/Authorization/ServerTime"
 
 
-class AuthService(Service):
+class AuthService(base.Service):
     def LoginWithUserName(self, username, password, app_token) -> dict:
         headers = {"ApplicationToken": app_token, "Content-Type": "application/json; charset=utf-8"}
 
@@ -31,8 +30,8 @@ class AuthService(Service):
         except requests.RequestException:
             raise ConnectionError(response.text)
 
-    @needs_auth
-    @get(url=SERVER_TIME)
+    @decorators.needs_auth
+    @decorators.get(url=SERVER_TIME)
     def ServerTime(self, result: requests.Response) -> datetime:
         # result.json() == "/Date(1234567890123+0300)/"
         time: str = result.json().strip("/").replace("Date(", "").replace(")", "")

@@ -1,5 +1,5 @@
-from .base import Service
+from . import base, decorators
 
 
-class FeedService(Service):
+class FeedService(base.Service):
     pass

@@ -27,7 +27,7 @@ def post(url: str):  # decorator with args
             session: requests.Session = self.session
             # get result from host
             # NOTE: json.dumps is executing here, no need to pass string to data
-            result = session.post(f"{self.host}/{url.lstrip('/')}", data=json.dumps(data))
+            result = session.post(f"{self.host}/{url.lstrip('/')}", data=json.dumps(data, ensure_ascii=False))
 
             return func(self, result, *args, **kwargs)
 

@@ -1,7 +1,7 @@
-from .base import Service
+from . import base, decorators
 
 
-class EntityService(Service):
+class EntityService(base.Service):
     def Load(self):
         pass
 
