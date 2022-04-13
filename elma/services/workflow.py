@@ -41,10 +41,41 @@ class WorkflowService(base.Service):
     def StartableProcesses(self, result: requests.Response):
         return Parser.normalize(result.json())
 
-    def start_process(self, process_header: int, process_name: str = "", context: dict | None = None):
-        if not context:
-            context = {}
-        data = {"ProcessHeaderId": process_header, "Context": context}
+    def start_process(
+        self, *, process_header: int = 0, process_token: str = "", process_name: str = "", context: dict | None = None
+    ) -> dict:
+        """Запуск процесса в элме. Выбор производится через Id заголовка процесса process_header или же через
+        токен запуска процесса process_token. Если процесс в элме не имеет автоматическую генерацию наименований
+        экземпляров, то необходимо передать параметр process_name.
+
+        Args:
+            process_header: заголовок процесса
+            process_token: токен процесса
+            process_name: наименование экземпляра процесса
+            context: контекстные переменные процесса
+
+        Returns:
+            dict: результат запуска процесса
+
+        Raises:
+            ValueError: если не передан ни один из параметров process_header и process_token, или переданы оба
+        """
+        if (
+            (not isinstance(process_header, int) or process_header < 1)
+            and not process_token
+            or process_token
+            and process_header
+        ):
+            raise ValueError("Для запуска необходимо передать или process_header, или process_token")
+
+        if process_token:
+            data = {"ProcessToken": process_token}
+        else:
+            data = {"ProcessHeaderId": process_header}
+
+        data["Context"] = context if context else {}
+
+        # не создаем такой параметр вообще, если не задан process_name
         if process_name:
             data["ProcessName"] = process_name
 
