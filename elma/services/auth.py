@@ -15,6 +15,8 @@ class AuthService(base.Service):
         session = requests.Session()
         session.headers = headers
 
+        password = f'"{password}"'
+
         response = session.post(f"{self.host}/{LOGIN_WITH.lstrip('/')}", params={"username": username}, data=password)
 
         try:
