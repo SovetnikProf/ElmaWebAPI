@@ -13,18 +13,15 @@ class Parser:
     ) -> dict:
         """Return dictionary that represents json Item structure"""
         result = {"Name": name}
-        if value is not None:
-            result["Value"] = value
-        if data is not None:
-            result["Data"] = data
-        if dataarray is not None:
-            result["DataArray"] = dataarray
+        result["Value"] = value if value is not None else ""
+        result["Data"] = data
+        result["DataArray"] = dataarray if dataarray is not None else []
         return result
 
     @staticmethod
     def _make_data(items: list) -> dict:
         """Return dictionary that represents json Data structure"""
-        return {"Items": items}
+        return {"Items": items, "Value": ""}
 
     @classmethod
     def normalize(cls, data: list | dict) -> list | dict:

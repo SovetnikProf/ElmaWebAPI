@@ -1,4 +1,4 @@
-from .services import AuthService, EntityService, FeedService, TaskService, WorkflowService
+from .services import AuthService, EntityService, FeedService, FilesService, TaskService, WorkflowService
 
 
 class API:
@@ -8,5 +8,6 @@ class API:
 
         self.EntityService = EntityService(host=host, session_headers=self.headers)
         self.FeedService = FeedService(host=host, session_headers=self.headers)
+        self.FilesService = FilesService(host=host, session_headers=self.headers)
         self.TaskService = TaskService(host=host, session_headers=self.headers)
         self.WorkflowService = WorkflowService(host=host, session_headers=self.headers)
