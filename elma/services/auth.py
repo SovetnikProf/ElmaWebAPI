@@ -9,13 +9,37 @@ SERVER_TIME = "/API/REST/Authorization/ServerTime"
 
 
 class AuthService(base.Service):
-    def LoginWithUserName(self, username, password, app_token) -> dict:
+    """
+    Реализация сервиса авторизации IAuthorizationService.
+    """
+
+    def LoginWithUserName(self, username: str, password: str, app_token: str) -> dict:
+        """
+        Авторизоваться на сервере как приложение с токеном ``app_token`` под пользователем ``username``
+        используя пароль ``password``.
+
+        Args:
+            username: имя пользователя
+            password: пароль от пользователя
+            app_token: токен приложения из настроек элмы
+
+        Returns:
+            dict: заголовки, используемые для последующих запросов
+
+        Raises:
+            AttributeError: если у сервиса не определен хост
+            ConnectionError: при ошибке запроса на авторизацию
+        """
+        if not hasattr(self, "host"):
+            raise AttributeError("AuthService has no host")
+
         headers = {"ApplicationToken": app_token, "Content-Type": "application/json; charset=utf-8"}
 
         session = requests.Session()
         session.headers = headers
 
-        password = f'"{password}"'
+        if not password.startswith('"') or not password.endswith('"'):
+            password = f'"{password}"'
 
         response = session.post(f"{self.host}/{LOGIN_WITH.lstrip('/')}", params={"username": username}, data=password)
 
@@ -35,6 +59,12 @@ class AuthService(base.Service):
     @decorators.needs_auth
     @decorators.get(url=SERVER_TIME)
     def ServerTime(self, result: requests.Response) -> datetime:
+        """
+        Получить текущее серверное время.
+
+        Returns:
+            datetime: объект datetime с текущим локальным временем на сервере
+        """
         # result.json() == "/Date(1234567890123+0300)/"
         time: str = result.json().strip("/").replace("Date(", "").replace(")", "")
         char = "+" if "+" in time else "-"
