@@ -73,7 +73,7 @@ def post(url: str):
     # noinspection PyMissingOrEmptyDocstring
     def decorator(func):
         # noinspection PyMissingOrEmptyDocstring
-        def wrapper(self, data: dict, uri: str | None = None, *args, **kwargs):
+        def wrapper(self, *args, data: dict, uri: str | None = None, **kwargs):
             if not _check_service(self):
                 raise TypeError(
                     '"post" can only work from Service instances or from objects with session and host attributes'
@@ -145,7 +145,7 @@ def get(url: str):
     # noinspection PyMissingOrEmptyDocstring
     def decorator(func):
         # noinspection PyMissingOrEmptyDocstring
-        def wrapper(self, params: dict | None = None, uri: str | None = None, *args, **kwargs):
+        def wrapper(self, *args, params: dict | None = None, uri: str | None = None, **kwargs):
             if not _check_service(self):
                 raise TypeError(
                     '"get" can only work from Service instances or from objects with session and host attributes'
