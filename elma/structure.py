@@ -128,12 +128,3 @@ class Parser:
     @staticmethod
     def parse(string: str) -> dict:
         return json.loads(string)
-
-
-{
-    "Items": [
-        {"Name": "ProcessHeaderId", "Value": 174},
-        {"Name": "ProcessName", "Value": "Generation X"},
-        {"Name": "Context", "Data": {"Items": [{"Name": "answer", "Value": "{}"}, {"Name": "processid"}]}},
-    ]
-}
