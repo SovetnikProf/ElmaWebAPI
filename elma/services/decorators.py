@@ -35,8 +35,8 @@ def post(url: str):
     Например, ::
 
         @post(url="/someurl/")
-        def send_post(self, result, *args, **kwargs):
-            ... # в самом методе обработка ответа result
+        def send_post(self, result: requests.Response, *args, **kwargs):
+            return Parser.normalize(result.json())  # в самом методе обработка ответа result
 
         # но вызов с отправляемыми данными в data
         send_post(data={"data": "some info"})
@@ -45,6 +45,9 @@ def post(url: str):
 
     Словарь отправляемых данных ``data`` будут автоматически преобразован в json-строку. ``args`` и ``kwargs`` будут
     переданы в метод обработки ответа.
+
+    Результат ``result`` является объектом ``requests.Response``, из которого можно будет получить необходимую
+    информацию.
 
     Помимо этого, можно изменить url отправления путем передачи в метод параметра ``uri``, например::
 
@@ -105,8 +108,8 @@ def get(url: str):
     Например, ::
 
         @get(url="/someurl/")
-        def send_get(self, result, *args, **kwargs):
-            ... # в самом методе обработка ответа result
+        def send_get(self, result: requests.Response, *args, **kwargs):
+            return Parser.normalize(result.json())  # в самом методе обработка ответа result
 
         # но вызов с отправляемыми данными в params
         send_get(params={"search": "SEARCH", "id": 1})
@@ -114,6 +117,9 @@ def get(url: str):
     В этом примере будет запрошена страница "host/someurl/?search=SEARCH&id=1".
 
     ``args`` и ``kwargs`` будут переданы в метод обработки ответа.
+
+    Результат ``result`` является объектом ``requests.Response``, из которого можно будет получить необходимую
+    информацию.
 
     Помимо этого, можно изменить url запроса путем передачи в метод параметра ``uri``, например::
 
