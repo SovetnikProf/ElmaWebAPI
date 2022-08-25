@@ -13,7 +13,7 @@ class WorkflowService(base.Service):
 
     @decorators.needs_auth
     @decorators.post(url=START_PROCESS_ASYNC)
-    def StartProcess(self, result: requests.Response) -> dict:
+    def _start_process(self, result: requests.Response) -> dict:
         """Стандартная функция API элмы для запуска процесса.
 
         На вход необходимо передать словарь. Для конкретизации процесса в словаре должен быть один из двух следующих
@@ -41,7 +41,7 @@ class WorkflowService(base.Service):
     def StartableProcesses(self, result: requests.Response):
         return Parser.normalize(result.json())
 
-    def start_process(
+    def StartProcess(
         self, *, process_header: int = 0, process_token: str = "", process_name: str = "", context: dict | None = None
     ) -> dict:
         """Запуск процесса в элме. Выбор производится через Id заголовка процесса process_header или же через
@@ -80,4 +80,4 @@ class WorkflowService(base.Service):
             data["ProcessName"] = process_name
 
         data = Parser.uglify(data)
-        return self.StartProcess(data)
+        return self._start_process(data=data)

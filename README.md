@@ -50,9 +50,9 @@ from elma import Parser
 Сигнатура: `Parser.normalize(data: list | dict) -> list | dict`
 
 Преобразует объекты _Data_ и _DataArray_ в удобный формат словарей: убирает лишнюю информацию, т.е. пустые значения
-`Value`, `Data` и `DataArray` из _Item_, а так же вынося значение параметра `Name` в качестве ключа.
+`Value`, `Data` и `DataArray` из _Item_, а так же выносит значение параметра `Name` в качестве ключа.
 
-Если входным параметром является структура _Item_, а не _Data_, то он будет преобразован в структуру _Data_
+Если входным параметром является структура _Item_, а не _Data_, то он будет обработан как структура _Data_
 с единственным элементом в массиве `Items`.
 
 Все вложенные элементы будут преобразованы по тому же принципу, что и внешние.
@@ -144,8 +144,6 @@ from elma import Library
 177
 ```
 
-
-
 ### services
 
 Для обращения к сервисам Web API Elma используется `ElmaAPI`:
@@ -202,6 +200,7 @@ API = ElmaAPI(host, username, password, token)
 >>> API.AuthService.ServerTime()
 2022-08-23 20:13:54.303000+03:00
 ```
+
 
 #### EntityService
 
@@ -274,7 +273,7 @@ params={
 ```python
 >>> API.EntityService.Query(params={"type": Library.uuids.SLA, "q": "ResponseSpeed='2 р/ч'"})
 [{'Id': '32', 'TypeUid': '2fd01a0d-0784-44e2-bd8c-231acb60e049', 'Uid': '9047d294-c00b-49bc-a4da-978d979e4aa5',
-'CreationDate': '07/06/2021 11:23:00', 'C_Id': '000032', 'FullName': None, 'Name': 'Удален. ТП уст. ПО по...
+'CreationDate': '07/06/2021 11:23:00', 'C_Id': '000032', 'FullName': None, 'Name': ...}]
 ```
 
 Результатом является список данных об объектах, очищенный через [`Parser.normalize`](#parsernormalize).
@@ -288,7 +287,7 @@ params={
 Использование:
 ```python
 >>> id = API.EntityService.Insert(
-...     typeuid=Library.UgF,
+...     typeuid=Library.uuids.UgF,
 ...     entityData=Parser.uglify(
 ...         {
 ...             "Name": "Тестовая УГФ",
@@ -306,14 +305,14 @@ params={
 
 ##### Update (IEntityService.Update)
 
-Обновить существующий объект в системе
+Обновить существующий объект в системе.
 
 Сигнатура метода: `EntityService.Update(entityData: dict, typeuid: str, entityid: int) -> int`.
 
 Использование:
 ```python
 >>> id = API.EntityService.Update(
-...     typeuid=Library.UgF,
+...     typeuid=Library.uuids.UgF,
 ...     entityid=385,
 ...     entityData=Parser.uglify({"MinimaljnoeVremyaNaZadachuMin": 10}),
 ... )
@@ -341,4 +340,54 @@ Under construction
 
 #### WorkflowService
 
-...
+##### StartableProcesses (Workflow.StartableProcesses)
+
+Загрузить список доступных для запуска процессов.
+
+Сигнатура метода: `WorkflowService.StartableProcesses() -> dict`.
+
+Использование:
+```python
+>>> API.WorkflowService.StartableProcesses()
+{'Groups': [{'Id': '21', 'Name': 'Django/Helpdesk'}, {'Id': '12', 'Name': 'Учетные процессы'}, ...],
+'Processes': [{'Id': '178', 'Name': '03. Перенос контактных данных', 'GroupId': '21'},
+{'Id': '175', 'Name': '02-Б. Обработка исключений', 'GroupId': '21'}, ...]}
+```
+
+Результатом является словарь данных со списками групп `Groups` и процессов `Processes`.
+
+##### StartProcess (Workflow.StartProcessAsync)
+
+Запустить процесс.
+
+Сигнатура метода:
+`WorkflowService.StartProcess(process_header: int, process_token: str, process_name: str, context: dict) -> dict`.
+
+Параметры:
+
+  - `process_header` — идентификатор заголовка процесса,
+  - `process_token` — токен запуска процесса,
+  - `process_name` — наименование экземпляра процесса,
+  - `context` — значения контекстных переменных.
+
+Запуск может производиться двумя способами: либо передачей `process_token`, либо передачей `process_header`.
+В первом случае токен берется из настроек бизнес-процесса в дизайнере (где разрешается запуск внешними приложениями),
+во втором — это id связанного с процессом объекта `ProcessHeader`, значение которого можно, например, посмотреть в
+мониторинге процессов (он будет написан в url: `InstanceFilter.ProcessHeader.Id=<нужное число>`)
+
+Использование:
+```python
+>>> API.WorkflowService.StartProcess(
+...     process_header=Library.process_headers.System02A,
+...     context={
+...         "processId": 540457,
+...         "answer": (
+...             '{"error": 0, "message": "Данные из кабинета 34201983 добавлены пользователю Nemy\n'
+...             'Аккаунт кабинета 42195001 не был найден"}'
+...         )
+...     }
+... )
+{'Result': 'True', 'Status': 'Executing', 'ExecutionToken': '3c058fcb-13e8-4e15-9d32-98d830d0a1f5'}
+```
+
+Результатом является словарь данных о запуске процесса.

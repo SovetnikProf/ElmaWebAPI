@@ -1,6 +1,7 @@
 from typing import Type
 
 from .base import Service
+from .error import ElmaError
 
 import json
 import requests
@@ -66,6 +67,7 @@ def post(url: str):
         url: url для отправки запроса.
 
     Raises:
+        ElmaError: если запрос не отработал на сервере.
         TypeError: если декорируемый метод не является методом объекта класса Service или же объекта с параметрами
                    session и host.
     """
@@ -73,11 +75,14 @@ def post(url: str):
     # noinspection PyMissingOrEmptyDocstring
     def decorator(func):
         # noinspection PyMissingOrEmptyDocstring
-        def wrapper(self, *args, data: dict, uri: str | None = None, **kwargs):
+        def wrapper(self, *args, data: dict | None = None, uri: str | None = None, **kwargs):
             if not _check_service(self):
                 raise TypeError(
                     '"post" can only work from Service instances or from objects with session and host attributes'
                 )
+
+            if data is None:
+                data = {}
 
             uri = uri if uri else url
 
@@ -89,6 +94,9 @@ def post(url: str):
             session: requests.Session = self.session
 
             result = session.post(path, data=json.dumps(data, ensure_ascii=False).encode("utf-8"))
+
+            if result.status_code == 500:
+                raise ElmaError(result.text)
 
             return func(self, result, *args, **kwargs)
 
@@ -138,6 +146,7 @@ def get(url: str):
         url: url для отправки запроса.
 
     Raises:
+        ElmaError: если запрос не отработал на сервере.
         TypeError: если декорируемый метод не является методом объекта класса Service или же объекта с параметрами
                    session и host.
     """
@@ -164,6 +173,9 @@ def get(url: str):
                 path += "?" + "&".join(f"{k}={v}" for k, v in params.items())
 
             result = session.get(path)
+
+            if result.status_code == 500:
+                raise ElmaError(result.text)
 
             return func(self, result, *args, **kwargs)
 
