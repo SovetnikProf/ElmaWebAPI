@@ -95,7 +95,7 @@ def post(url: str):
 
             result = session.post(path, data=json.dumps(data, ensure_ascii=False).encode("utf-8"))
 
-            if result.status_code == 500:
+            if result.status_code != 200:
                 raise ElmaError(result.text)
 
             return func(self, result, *args, **kwargs)
@@ -174,7 +174,7 @@ def get(url: str):
 
             result = session.get(path)
 
-            if result.status_code == 500:
+            if result.status_code != 200:
                 raise ElmaError(result.text)
 
             return func(self, result, *args, **kwargs)

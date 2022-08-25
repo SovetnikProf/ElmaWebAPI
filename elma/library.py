@@ -20,6 +20,7 @@ class Library:
 
 
 library = Library()
+
 library.register_uuid("Contractor", "1fb7545c-b103-44b1-9b01-dacb986db75d")
 library.register_uuid("ContractorLegal", "3325eab1-fe46-4900-a617-c6fb54ac24c0")
 library.register_uuid("NaryadZakaz", "cc53a918-3136-46ba-b938-d17289eb2ce4")
