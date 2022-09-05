@@ -91,9 +91,9 @@ def post(url: str):
             else:
                 path = f"{self.host}/{uri.lstrip('/')}"
 
-            session: requests.Session = self.session
-
-            result = session.post(path, data=json.dumps(data, ensure_ascii=False).encode("utf-8"))
+            with self.session as session:
+                session: requests.Session
+                result = session.post(path, data=json.dumps(data, ensure_ascii=False).encode("utf-8"))
 
             if result.status_code != 200:
                 raise ElmaError(result.text)
@@ -160,8 +160,6 @@ def get(url: str):
                     '"get" can only work from Service instances or from objects with session and host attributes'
                 )
 
-            session: requests.Session = self.session
-
             uri = uri if uri else url
 
             if uri.startswith("http://") or uri.startswith("https://"):
@@ -172,7 +170,9 @@ def get(url: str):
             if params:
                 path += "?" + "&".join(f"{k}={v}" for k, v in params.items())
 
-            result = session.get(path)
+            with self.session as session:
+                session: requests.Session
+                result = session.get(path)
 
             if result.status_code != 200:
                 raise ElmaError(result.text)

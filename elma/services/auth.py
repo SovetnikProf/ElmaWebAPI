@@ -42,6 +42,7 @@ class AuthService(base.Service):
             password = f'"{password}"'
 
         response = session.post(f"{self.host}/{LOGIN_WITH.lstrip('/')}", params={"username": username}, data=password)
+        session.close()
 
         try:
             parsed = response.json()

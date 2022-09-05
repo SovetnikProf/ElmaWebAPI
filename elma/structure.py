@@ -1,6 +1,7 @@
+from typing import AnyStr, Iterable
+
 import copy
 import json
-from typing import AnyStr
 
 
 AnyBasic = AnyStr | int | float | bool
@@ -125,3 +126,11 @@ class Parser:
     @staticmethod
     def parse(string: str) -> dict:
         return json.loads(string)
+
+    @staticmethod
+    def unwrap(seq: Iterable, field: str = "Id"):
+        def pop(data: dict, key: str):
+            data.pop(key)
+            return data
+
+        return {x[field]: pop(x, field) for x in seq}
