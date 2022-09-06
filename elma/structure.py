@@ -128,9 +128,11 @@ class Parser:
         return json.loads(string)
 
     @staticmethod
-    def unwrap(seq: Iterable, field: str = "Id"):
-        def pop(data: dict, key: str):
+    def unwrap(seq: Iterable[dict], field: str = "Id", check_last: bool = False) -> dict:
+        def pop(data: dict, key: str, check_if_last: bool) -> dict | AnyBasic:
             data.pop(key)
+            if check_if_last and len(data) == 1:
+                return list(data.values())[0]
             return data
 
-        return {x[field]: pop(x, field) for x in seq}
+        return {x[field]: pop(x, field, check_last) for x in seq}

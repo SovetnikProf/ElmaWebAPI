@@ -1,5 +1,6 @@
 from elma import ElmaAPI, Parser, Library
 
+import os
 import unittest
 from datetime import datetime, timezone, timedelta
 
@@ -16,11 +17,7 @@ class TestLibrary(unittest.TestCase):
 class SetUpMixin:
     def setUp(self) -> None:
         self.API = ElmaAPI(
-            "http://192.168.1.19:8000",
-            "Artificer",
-            "fAy#L6k_Hs$EdiA*mAa",
-            "02969CDAAB144BFA301FE1B5BFD69A44638D46002421054478E0B2B76D5D6004"
-            "053B451672EBDCCE6B8523ACBFD4BFB6F1C5C7339954E85F94409CA916493F04",
+            os.environ["ELMA_URL"], os.environ["ELMA_USER"], os.environ["ELMA_PASSWORD"], os.environ["ELMA_TOKEN"]
         )
 
 

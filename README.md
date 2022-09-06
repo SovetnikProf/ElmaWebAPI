@@ -47,7 +47,7 @@ from elma import Parser
 
 #### Parser.normalize
 
-Сигнатура: `Parser.normalize(data: list | dict) -> list | dict`
+Сигнатура: `Parser.normalize(data: list | dict) -> list | dict`.
 
 Преобразует объекты _Data_ и _DataArray_ в удобный формат словарей: убирает лишнюю информацию, т.е. пустые значения
 `Value`, `Data` и `DataArray` из _Item_, а так же выносит значение параметра `Name` в качестве ключа.
@@ -85,7 +85,7 @@ from elma import Parser
 
 #### Parser.uglify
 
-Сигнатура: `Parser.uglify(data: list | dict) -> list | dict`
+Сигнатура: `Parser.uglify(data: list | dict) -> list | dict`.
 
 Преобразует обычные словари в форматы ELMA Web Data и ELMA Web DataArray.
 Является обратной операцией для `Parser.normalize`.
@@ -125,9 +125,33 @@ from elma import Parser
 
 #### Parser.parse
 
-Сигнатура `Parser.parse(string: str) -> dict`
+Сигнатура `Parser.parse(string: str) -> dict`.
 
 Алиас для метода `json.loads(string)`.
+
+
+#### Parser.unwrap
+
+Сигнатура `Parser.unwrap(seq: Iterable[dict], field: str = "Id", check_last: bool = False) -> dict`.
+
+Разворачивает список в словарь, где ключом выступает поле `field` (по умолчанию `Id`). Таким образом, список словарей
+переходит в словарь словарей. Если задать `check_last=True`, то, если в элементе осталось только 1 значение, внутренние 
+словари расформировываются, оставляя только внешний.
+
+Подразумевается, что при использовании структура данных известна и значения выбираемого поля `field` в списке является
+уникальным.
+
+Примеры:
+```python
+>>> Parser.unwrap([{"Id": "1", "Value": "value"}, {"Id": "2", "Value": "string"}])
+{"1": {"Value": "value"}, "2": {"Value": "string"}}
+
+>>> Parser.unwrap([{"Id": "1", "Value": "value"}, {"Id": "2", "Value": "string"}], check_last=True)
+{"1": "value", "2": "string"}
+
+>>> Parser.unwrap([{"Id": "1", "Value": "value"}, {"Id": "2", "Value": "string"}], field="Value")
+{"value": {"Id": "1"}, "string": {"Id": "2"}}
+```
 
 
 ### library.py
@@ -143,6 +167,7 @@ from elma import Library
 >>> Library.process_headers.System02A
 177
 ```
+
 
 ### services
 
