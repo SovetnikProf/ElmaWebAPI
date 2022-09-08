@@ -1,10 +1,12 @@
-from typing import Type
+from typing import TYPE_CHECKING
 
-from .base import Service
 from .error import ElmaError
 
 import json
 import requests
+
+if TYPE_CHECKING:
+    from .base import Service
 
 
 def needs_auth(func):
@@ -21,13 +23,9 @@ def needs_auth(func):
     return wrapper
 
 
-def _check_service(obj: Service | Type) -> bool:
-    return isinstance(obj, Service) or hasattr(obj, "session") and hasattr(obj, "host")
-
-
 def post(url: str):
     """
-    Декоратор на метод объекта. Помечает метод объекта как POST-запрос на прописанный ``url``. Объект должен быть
+    Декоратор на метод сервиса. Помечает метод объекта как POST-запрос на прописанный ``url``. Сервис должен быть
     аутентифицирован в Элме: он должен иметь свойства ``session`` и ``host``.
 
     Декорируемый метод — это метод для **обработки** ответа на запрос, но вызываться он должен с данными для
@@ -68,19 +66,12 @@ def post(url: str):
 
     Raises:
         ElmaError: если запрос не отработал на сервере.
-        TypeError: если декорируемый метод не является методом объекта класса Service или же объекта с параметрами
-                   session и host.
     """
 
     # noinspection PyMissingOrEmptyDocstring
     def decorator(func):
         # noinspection PyMissingOrEmptyDocstring
-        def wrapper(self, *args, data: dict | None = None, uri: str | None = None, **kwargs):
-            if not _check_service(self):
-                raise TypeError(
-                    '"post" can only work from Service instances or from objects with session and host attributes'
-                )
-
+        def wrapper(self: "Service", *args, data: dict | None = None, uri: str | None = None, **kwargs):
             if data is None:
                 data = {}
 
@@ -91,12 +82,27 @@ def post(url: str):
             else:
                 path = f"{self.host}/{uri.lstrip('/')}"
 
-            with self.session as session:
-                session: requests.Session
-                result = session.post(path, data=json.dumps(data, ensure_ascii=False).encode("utf-8"))
+            retries = 0
 
-            if result.status_code != 200:
-                raise ElmaError(result.text)
+            def repeat(datadict, url):
+                nonlocal self, retries
+                with self.session as session:
+                    session: requests.Session
+                    response = session.post(url, data=json.dumps(datadict, ensure_ascii=False).encode("utf-8"))
+
+                if response.status_code != 200:
+                    if (
+                        response.status_code == 400
+                        and '"StatusCode":401' in response.text
+                        and retries < self.parent.settings.max_retries
+                    ):
+                        self.parent.headers = self.parent.reconnect()
+                        retries += 1
+                        return repeat(datadict, url)
+                    raise ElmaError(response.text)
+                return response
+
+            result = repeat(data, path)
 
             return func(self, result, *args, **kwargs)
 
@@ -107,7 +113,7 @@ def post(url: str):
 
 def get(url: str):
     """
-    Декоратор на метод объекта. Помечает метод объекта как GET-запрос на прописанный ``url``. Объект должен быть
+    Декоратор на метод сервиса. Помечает метод объекта как GET-запрос на прописанный ``url``. Сервис должен быть
     аутентифицирован в Элме: он должен иметь свойства ``session`` и ``host``.
 
     Декорируемый метод — это метод для **обработки** ответа на запрос, но вызываться он может с данными для
@@ -147,19 +153,12 @@ def get(url: str):
 
     Raises:
         ElmaError: если запрос не отработал на сервере.
-        TypeError: если декорируемый метод не является методом объекта класса Service или же объекта с параметрами
-                   session и host.
     """
 
     # noinspection PyMissingOrEmptyDocstring
     def decorator(func):
         # noinspection PyMissingOrEmptyDocstring
-        def wrapper(self, *args, params: dict | None = None, uri: str | None = None, **kwargs):
-            if not _check_service(self):
-                raise TypeError(
-                    '"get" can only work from Service instances or from objects with session and host attributes'
-                )
-
+        def wrapper(self: "Service", *args, params: dict | None = None, uri: str | None = None, **kwargs):
             uri = uri if uri else url
 
             if uri.startswith("http://") or uri.startswith("https://"):
@@ -170,12 +169,27 @@ def get(url: str):
             if params:
                 path += "?" + "&".join(f"{k}={v}" for k, v in params.items())
 
-            with self.session as session:
-                session: requests.Session
-                result = session.get(path)
+            retries = 0
 
-            if result.status_code != 200:
-                raise ElmaError(result.text)
+            def repeat(url):
+                nonlocal self, retries
+                with self.session as session:
+                    session: requests.Session
+                    response = session.get(url)
+
+                if response.status_code != 200:
+                    if (
+                        response.status_code == 400
+                        and '"StatusCode":401' in response.text
+                        and retries < self.parent.settings.max_retries
+                    ):
+                        self.parent.headers = self.parent.reconnect()
+                        retries += 1
+                        return repeat(url)
+                    raise ElmaError(response.text)
+                return response
+
+            result = repeat(path)
 
             return func(self, result, *args, **kwargs)
 

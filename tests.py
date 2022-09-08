@@ -22,6 +22,13 @@ class SetUpMixin:
 
 
 class TestAuth(SetUpMixin, unittest.TestCase):
+    def test_reconnect(self):
+        # ломаем авторизацию
+        self.API.headers["AuthToken"] = "12345"
+        self.API.headers["SessionToken"] = "12345"
+
+        self.test_clock()
+
     def test_clock(self):
         tz = timezone(timedelta(hours=3))
         time_a = datetime.now(tz=tz)
