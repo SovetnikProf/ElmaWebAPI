@@ -4,6 +4,7 @@
 
 ## Описание API
 
+
 ### structure.py
 
 Преобразования структур WebAPI Elma: _Item_, _Data_ и _DataArray_ в обычные словари и обратно.
@@ -45,6 +46,7 @@
 from elma import Parser
 ```
 
+
 #### Parser.normalize
 
 Сигнатура: `Parser.normalize(data: list | dict) -> list | dict`.
@@ -82,6 +84,7 @@ from elma import Parser
 ... ])
 [{"Id": 2, "Uid": "qwerty"}, {"Id": 5, "Uid": "qwerty"}]
 ```
+
 
 #### Parser.uglify
 
@@ -123,6 +126,7 @@ from elma import Parser
 ]
 ```
 
+
 #### Parser.parse
 
 Сигнатура `Parser.parse(string: str) -> dict`.
@@ -154,6 +158,7 @@ from elma import Parser
 ```
 
 
+
 ### library.py
 
 Предоставляет хранилище данных об объектах, процессах и т.п. в Elma.
@@ -167,6 +172,7 @@ from elma import Library
 >>> Library.process_headers.System02A
 177
 ```
+
 
 
 ### services
@@ -185,15 +191,52 @@ API = ElmaAPI(host, username, password, token)
 - `password`: пароль этого пользователя
 - `token`: токен веб-приложения, берется в Elma (Администрирование → Система → Внешние приложения)
 
+Опциональные параметры:
+
+- `max_retries`: максимальное количество попыток переподключения к серверу при ошибках <u>авторизации</u>. 
+
 При создании объекта автоматически будет произведена попытка подключения к системе.
 После этого будет доступно 6 сервисов для работы:
 
-- `AuthService` — частичное представление `IAuthorizationService`
-- `EntityService` — частичное представление `IEntityService`
-- `FeedService` — частичное представление `IMessageFeedService` и `Messages`
-- `FilesService` — частичное представление `IFilesService`
-- `TaskService` — частичное представление `Tasks`
-- `WorkflowService` — частичное представление `Workflow`
+- `AuthService` — частичное представление `IAuthorizationService`;
+- `EntityService` — частичное представление `IEntityService`;
+- `FeedService` — частичное представление `IMessageFeedService` и `Messages`;
+- `FilesService` — частичное представление `IFilesService`;
+- `TaskService` — частичное представление `Tasks`;
+- `WorkflowService` — частичное представление `Workflow`.
+
+Помимо этого, у объекта `ElmaAPI` доступны:
+- метод `reconnect`, возвращающий словарь заголовков для авторизации;
+- свойство `host` — веб-адрес Elma;
+- свойство `credentials` — кортеж из имени пользователя, пароля и токена веб-приложения;
+- свойство `headers` — словарь заголовков для подключения к хосту;
+- свойство `settings` — неизменяемый объект настроек с задаваемыми изначально свойствами
+  `host`, `username`, `password`, `apptoken`, `max_retries`.
+
+Во всех нижеперечисленных сервисах имеются следующие свойства:
+
+- `parent` — ссылка на родительский объект `ElmaAPI`;
+- `session` — сессия `requests.Session` с заголовками авторизации.
+
+
+#### ElmaError
+
+При возникновении ошибок, методы сервисов кидают ошибку класса `ElmaError`, в которой прописан текст ответа от Elma.
+
+Для использования в блоках `try ... except` или `contextlib.suppress` импортировать класс ошибки можно напрямую из
+`elma`:
+
+```python
+from elma import ElmaError
+
+...
+
+try:
+    ...
+except ElmaError:
+    ...
+```
+
 
 #### AuthService
 
@@ -350,17 +393,17 @@ params={
 
 #### FeedService
 
-Under construction
+Не реализован.
 
 
 #### FilesService
 
-Under construction
+Не реализован.
 
 
 #### TaskService
 
-Under construction
+Не реализован.
 
 
 #### WorkflowService
@@ -416,3 +459,148 @@ Under construction
 ```
 
 Результатом является словарь данных о запуске процесса.
+
+
+
+### services/decorators.py
+
+Предоставляет декораторы для методов сервисов. Более подробно о декораторах можно узнать в документации самих методов.
+
+
+#### needs_auth
+
+Проверяет у родителя сервиса (`ElmaAPI`) наличие свойства `headers`, а так же проверяет в нем значение `AuthToken` на 
+пустоту. Если проверка не проходит, то декоратор изменяет `headers` через метод `ElmaAPI.reconnect`.
+
+Использование:
+```python
+from elma.services import decorators
+from elma.services.base import Service
+
+class NewService(Service):
+    @decorators.needs_auth
+    def Method(self, *args, **kwargs): ...
+```
+
+
+#### get
+
+Предваряет выполнение метода GET-запросом на указанный адрес. Сам метод должен принимать аргумент `result` — ответ 
+запроса.
+
+При вызове декорированного метода можно передать два аргумента:
+
+- `params` — словарь, который после преобразуется в параметр поиска GET-запроса (`url?key1=value1&key2=value`);
+- `uri` — перенаправление запроса на указанный адрес (например, если в адрес необходимо подставить переменную).
+
+Остальные параметры будут напрямую переданы в метод.
+
+Использование:
+```python
+from elma.services import decorators
+from elma.services.base import Service
+
+class NewService(Service):
+    @decorators.get(url="/Service/Method")
+    def GetMethod(self, result, uid, *args, **kwargs):
+        # допустим, что по адресу "/Service/Method/{type_uid}?Id={id}" возвращается переданный Id в запросе
+        return result["Id"], uid
+
+...
+
+>>> type_uid = "1fb7545c-b103-44b1-9b01-dacb986db75d"
+>>> API.NewService.GetMethod(params={"Id": 20}, uri=f"/Service/Method/{type_uid}/", uid=type_uid)
+20, '1fb7545c-b103-44b1-9b01-dacb986db75d'
+```
+
+
+#### post
+
+Предваряет выполнение метода POST-запросом на указанный адрес. Сам метод должен принимать аргумент `result` — ответ 
+запроса.
+
+При вызове декорированного метода можно передать два аргумента:
+
+- `data` — словарь с данными, которые будут отправлены на указанный адрес;
+- `uri` — перенаправление запроса на указанный адрес (например, если в адрес необходимо подставить переменную).
+
+Остальные параметры будут напрямую переданы в метод.
+
+Использование:
+```python
+from elma.services import decorators
+from elma.services.base import Service
+
+class NewService(Service):
+    @decorators.post(url="/Service/Method")
+    def PostMethod(self, result, uid, *args, **kwargs):
+        # допустим, что при передаче Id в POST-запросе на адрес "/Service/Method/{type_uid}" возвращается 
+        # этот самый Id
+        return result["Id"], uid
+
+...
+
+>>> type_uid = "1fb7545c-b103-44b1-9b01-dacb986db75d"
+>>> API.NewService.PostMethod(data={"Id": 20}, uri=f"/Service/Method/{type_uid}/", uid=type_uid)
+20, '1fb7545c-b103-44b1-9b01-dacb986db75d'
+```
+
+
+#### Примеры использования в существующих сервисах
+
+Для запуска процесса в [`WorkflowService`](#startprocess-workflowstartprocessasync) используются декораторы
+`needs_auth` и `post` на метод `_start_process`, а метод `StartProcess` является лишь удобной обёрткой для его запуска.
+
+```python
+from . import base, decorators
+from ..structure import Parser
+
+
+START_PROCESS_ASYNC = "/API/REST/Workflow/StartProcessAsync"
+
+
+class WorkflowService(base.Service):
+    @decorators.needs_auth
+    @decorators.post(url=START_PROCESS_ASYNC)
+    def _start_process(self, result):
+        return Parser.normalize(result.json())
+        
+    def StartProcess(self, *, process_header, process_token, process_name, context):
+        if (
+            (not isinstance(process_header, int) or process_header < 1) and not process_token
+            or process_token and process_header
+        ):
+            raise ValueError("Для запуска необходимо передать или process_header, или process_token")
+
+        if process_token:
+            data = {"ProcessToken": process_token}
+        else:
+            data = {"ProcessHeaderId": process_header}
+
+        data["Context"] = context if context else {}
+
+        if process_name:
+            data["ProcessName"] = process_name
+
+        data = Parser.uglify(data)
+        return self._start_process(data=data) 
+```
+
+Для получения сущности в [`EntityService`](#load-ientityserviceload) используются декораторы `needs_auth` и `get` на
+метод `Load`. Большинство методов, в которых происходит только GET-запрос, из-за декораторов внутри реализованы в одну 
+строчку:
+
+```python
+from . import base, decorators
+from ..structure import Parser
+
+
+LOAD = "/API/REST/Entity/Load"
+
+
+class EntityService(base.Service):
+    @decorators.needs_auth
+    @decorators.get(url=LOAD)
+    def Load(self, result, *args, **kwargs):
+        return Parser.normalize(result.json())
+```

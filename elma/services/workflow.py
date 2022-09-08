@@ -1,7 +1,10 @@
+from typing import TYPE_CHECKING
+
 from . import base, decorators
 from ..structure import Parser
 
-import requests
+if TYPE_CHECKING:
+    from requests import Response
 
 
 START_PROCESS_ASYNC = "/API/REST/Workflow/StartProcessAsync"
@@ -13,7 +16,7 @@ class WorkflowService(base.Service):
 
     @decorators.needs_auth
     @decorators.post(url=START_PROCESS_ASYNC)
-    def _start_process(self, result: requests.Response) -> dict:
+    def _start_process(self, result: "Response") -> dict:
         """Стандартная функция API элмы для запуска процесса.
 
         На вход необходимо передать словарь. Для конкретизации процесса в словаре должен быть один из двух следующих
@@ -38,7 +41,7 @@ class WorkflowService(base.Service):
 
     @decorators.needs_auth
     @decorators.post(url=STARTABLE_PROCESSES)
-    def StartableProcesses(self, result: requests.Response):
+    def StartableProcesses(self, result: "Response"):
         return Parser.normalize(result.json())
 
     def StartProcess(

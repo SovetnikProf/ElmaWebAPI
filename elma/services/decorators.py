@@ -3,21 +3,21 @@ from typing import TYPE_CHECKING
 from .error import ElmaError
 
 import json
-import requests
 
 if TYPE_CHECKING:
+    import requests
     from .base import Service
 
 
 def needs_auth(func):
     """
-    Декоратор на метод объекта. Проверяет, что текущий объект имеет среди ``self.headers`` заголовок ``AuthToken``.
+    Декоратор на метод сервиса. Проверяет, что текущий объект имеет среди ``self.headers`` заголовок ``AuthToken``.
     Это означает, что текущий объект аутентифицирован на сервере Элмы.
     """
 
-    def wrapper(self, *args, **kwargs):
-        if not self.headers or not self.headers.get("AuthToken", None):
-            raise ValueError("Требуется авторизация")
+    def wrapper(self: "Service", *args, **kwargs):
+        if not self.parent.headers or not self.parent.headers.get("AuthToken", None):
+            self.parent.headers = self.parent.reconnect()
         return func(self, *args, **kwargs)
 
     return wrapper
@@ -25,8 +25,7 @@ def needs_auth(func):
 
 def post(url: str):
     """
-    Декоратор на метод сервиса. Помечает метод объекта как POST-запрос на прописанный ``url``. Сервис должен быть
-    аутентифицирован в Элме: он должен иметь свойства ``session`` и ``host``.
+    Декоратор на метод сервиса. Помечает метод объекта как POST-запрос на прописанный ``url``.
 
     Декорируемый метод — это метод для **обработки** ответа на запрос, но вызываться он должен с данными для
     отправки через аргумент ``data``, который принимает словарь.
@@ -80,14 +79,14 @@ def post(url: str):
             if uri.startswith("http://") or uri.startswith("https://"):
                 path = uri
             else:
-                path = f"{self.host}/{uri.lstrip('/')}"
+                path = f"{self.parent.host}/{uri.lstrip('/')}"
 
             retries = 0
 
             def repeat(datadict, url):
                 nonlocal self, retries
                 with self.session as session:
-                    session: requests.Session
+                    session: "requests.Session"
                     response = session.post(url, data=json.dumps(datadict, ensure_ascii=False).encode("utf-8"))
 
                 if response.status_code != 200:
@@ -113,8 +112,7 @@ def post(url: str):
 
 def get(url: str):
     """
-    Декоратор на метод сервиса. Помечает метод объекта как GET-запрос на прописанный ``url``. Сервис должен быть
-    аутентифицирован в Элме: он должен иметь свойства ``session`` и ``host``.
+    Декоратор на метод сервиса. Помечает метод объекта как GET-запрос на прописанный ``url``.
 
     Декорируемый метод — это метод для **обработки** ответа на запрос, но вызываться он может с данными для
     запроса через аргумент ``params``, который принимает словарь.
@@ -164,7 +162,7 @@ def get(url: str):
             if uri.startswith("http://") or uri.startswith("https://"):
                 path = uri
             else:
-                path = f"{self.host}/{uri.lstrip('/')}"
+                path = f"{self.parent.host}/{uri.lstrip('/')}"
 
             if params:
                 path += "?" + "&".join(f"{k}={v}" for k, v in params.items())

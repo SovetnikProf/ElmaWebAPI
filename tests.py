@@ -22,8 +22,14 @@ class SetUpMixin:
 
 
 class TestAuth(SetUpMixin, unittest.TestCase):
-    def test_reconnect(self):
-        # ломаем авторизацию
+    def test_reconnect_needs_auth(self):
+        # ломаем авторизацию, но так, чтобы декоратор needs_auth обратил на это внимание
+        self.API.headers = {}
+
+        self.test_clock()
+
+    def test_reconnect_request_decorator(self):
+        # ломаем авторизацию, но так, чтобы декоратор needs_auth не обратил на это внимание, а запрос ушел в get
         self.API.headers["AuthToken"] = "12345"
         self.API.headers["SessionToken"] = "12345"
 
@@ -68,6 +74,12 @@ class TestEntity(SetUpMixin, unittest.TestCase):
         self.assertEqual(id, 3)
         obj = self.API.EntityService.Load(params={"type": TEST_LABEL_UUID, "id": 3})
         self.assertEqual(obj["NaimenovanieMetki"], new_name)
+
+
+class TestWorkflow(SetUpMixin, unittest.TestCase):
+    def test_startable(self):
+        startable = self.API.WorkflowService.StartableProcesses()
+        self.assertTrue(isinstance(startable, dict) and "Groups" in startable and "Processes" in startable)
 
 
 if __name__ == "__main__":

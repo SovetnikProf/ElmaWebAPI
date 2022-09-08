@@ -30,9 +30,6 @@ class AuthService(base.Service):
             AttributeError: если у сервиса не определен хост
             ConnectionError: при ошибке запроса на авторизацию
         """
-        if not hasattr(self, "host"):
-            raise AttributeError("AuthService has no host")
-
         headers = {"ApplicationToken": app_token, "Content-Type": "application/json; charset=utf-8"}
 
         session = requests.Session()
@@ -41,19 +38,19 @@ class AuthService(base.Service):
         if not password.startswith('"') or not password.endswith('"'):
             password = f'"{password}"'
 
-        response = session.post(f"{self.host}/{LOGIN_WITH.lstrip('/')}", params={"username": username}, data=password)
+        response = session.post(
+            f"{self.parent.host}/{LOGIN_WITH.lstrip('/')}", params={"username": username}, data=password
+        )
         session.close()
 
         try:
             parsed = response.json()
-            new_headers = {
+            return {
                 "ApplicationToken": app_token,
                 "Content-Type": "application/json; charset=utf-8",
                 "AuthToken": parsed["AuthToken"],
                 "SessionToken": parsed["SessionToken"],
             }
-            self.headers = new_headers
-            return new_headers
         except requests.RequestException:
             raise ConnectionError(response.text)
 

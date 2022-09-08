@@ -7,15 +7,13 @@ if TYPE_CHECKING:
 
 
 class Service:
-    __slots__ = "host", "headers", "parent"
+    __slots__ = "parent"
 
-    def __init__(self, host: str, session_headers: dict, parent: "API"):
-        self.host = host.rstrip("/")
-        self.headers = session_headers
+    def __init__(self, parent: "API"):
         self.parent = parent
 
     @property
     def session(self) -> requests.Session:
         session = requests.Session()
-        session.headers = self.headers
+        session.headers = self.parent.headers
         return session
