@@ -522,7 +522,7 @@ params={
 Использование:
 ```pycon
 >>> API.WorkflowService.StartProcess(
-...     process_header=Library.process_headers.System02A,
+...     process_header=Library.processes.System02A.header,
 ...     context={
 ...         "processId": 540457,
 ...         "answer": (
