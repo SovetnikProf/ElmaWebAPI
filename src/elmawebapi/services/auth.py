@@ -6,6 +6,22 @@ import requests
 
 LOGIN_WITH = "/API/REST/Authorization/LoginWith"
 SERVER_TIME = "/API/REST/Authorization/ServerTime"
+SERVER_TIME_UTC = "/API/REST/Authorization/ServerTimeUTC"
+
+
+def _parse_time(server_response: str) -> datetime:
+    time: str = server_response.strip("/").replace("Date(", "").replace(")", "")
+    char = "+" if "+" in time else "-"
+    try:
+        ts, tz = time.split(char)
+    except ValueError:
+        ts, tz = time, "0000"
+
+    ts = int(ts) / 1000.0  # python timestamp is 1234567890.123
+    tz = datetime.strptime(f"{char}{tz}", "%z").tzinfo
+
+    dt = datetime.fromtimestamp(ts, tz=tz)
+    return dt
 
 
 class AuthService(base.Service):
@@ -64,12 +80,16 @@ class AuthService(base.Service):
             datetime: объект datetime с текущим локальным временем на сервере
         """
         # result.json() == "/Date(1234567890123+0300)/"
-        time: str = result.json().strip("/").replace("Date(", "").replace(")", "")
-        char = "+" if "+" in time else "-"
-        ts, tz = time.split("+")
+        return _parse_time(result.json())
 
-        ts = int(ts) / 1000.0  # python timestamp is 1234567890.123
-        tz = datetime.strptime(f"{char}{tz}", "%z").tzinfo
+    @decorators.needs_auth
+    @decorators.get(url=SERVER_TIME_UTC)
+    def ServerTimeUTC(self, result: requests.Response) -> datetime:
+        """
+        Получить текущее серверное время в формате UTC.
 
-        dt = datetime.fromtimestamp(ts, tz=tz)
-        return dt
+        Returns:
+            datetime: объект datetime с текущим локальным временем на сервере
+        """
+        # result.json() == "/Date(1234567890123+0300)/"
+        return _parse_time(result.json())

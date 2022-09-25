@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING
 import requests
 
 if TYPE_CHECKING:
-    from ..main import API
+    from ..api import API
 
 
 class Service:

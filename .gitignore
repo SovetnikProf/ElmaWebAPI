@@ -1,5 +1,7 @@
 __pycache__
 .idea
+build
+*.egg-info
 
 .env
 local.py

@@ -42,8 +42,9 @@
 в более наглядные словари и обратно. Для этого и был разработан данный модуль.
 
 Преобразования выполняются обращением к классу `Parser`:
+
 ```python
-from elma import Parser
+from elmawebapi import Parser
 ```
 
 
@@ -161,25 +162,100 @@ from elma import Parser
 
 ### library.py
 
-Предоставляет хранилище данных об объектах, процессах и т.п. в Elma.
+Предоставляет хранилище данных об объектах и процессах в Elma.
+
+Является синглтоном. Изначально данные в объект необходимо каким-либо образом загрузить для последующего использования.
+Предоставляет два хранилища: `uuids` и `processes`.
+
+В первом хранятся все uuid-ы зарегистрированных типов данных (их можно увидеть, например, в API самой элмы по адресу
+`/API/Help/Types`). Во втором хранятся "способы" запуска процессов: по _ProcessHeaderId_ и по _ProcessToken_.
+_ProcessHeaderId_ можно посмотреть, например, в мониторе процессов (его видно в url); а _ProcessToken_ создается в
+дизайнере при выборе пункта «Запуск из внешних систем» в настройках бизнес-процесса.
+
+Естественно все данные, хранимые в этом объекте, сугубо индивидуальные, поэтому "подсказок" и "автодополнения" у
+хранилищ нет.
+
+Использование:
+
+```python
+from elmawebapi import Library
+
+Library.uuids.Contractor == "1fb7545c-b103-44b1-9b01-dacb986db75d"  # True
+```
+
+Для заполнения используются три метода: `load_from_help`, `register_process` и `register_uuid`.
+
+
+#### Library.load_from_help
+
+Загружает данные из API-справки самого сервера элмы в хранилище uuid-ов.
+
+Сигнатура метода: `Library.load_from_help(host: str, url: str) -> None`.
+
+По умолчанию `url = "/API/Help/Types"` — ссылка на страницу с данными на хосте.
 
 Использование:
 ```python
-from elma import Library
-
->>> Library.uuids.Contractor
+>>> Library.load_from_help(elma_host)
+>>> Library.uuid.Contractor
 "1fb7545c-b103-44b1-9b01-dacb986db75d"
->>> Library.process_headers.System02A
-177
 ```
+
+Поскольку данных о _ProcessHeaderId_ и тем более _ProcessToken_ в справке не находится, то для заполнения данных о них
+используется метод `register_process`.
+
+#### Library.register_process
+
+Создает запись о процессе в хранилище `processes`.
+
+Сигнатура метода: `Library.register_process(name: str, *, header: int, token: str) -> None`.
+
+Для сохранения данных о процессе необходимо дать его наименование для обращения из хранилища, а так же либо id
+заголовка, либо токен запуска, либо оба параметра вместе. В случае передачи одного из параметров, второй будет равен
+`None`.
+
+Использование:
+```python
+>>> Library.register_process("ProcessWithHeader", header=10)
+>>> Library.register_process("ProcessWithToken", token="00000000-1111-2222-3333-444444444444")
+>>> Library.register_process("ProcessWithBoth", header=11, token="11111111-2222-3333-4444-555555555555")
+>>> Library.processes.ProcessWithHeader.header
+10
+>>> Library.processes.ProcessWithToken.token
+"00000000-1111-2222-3333-444444444444"
+>>> Library.processes.ProcessWithBoth.header
+11
+>>> Library.processes.ProcessWithBoth.token
+"11111111-2222-3333-4444-555555555555"
+```
+
+#### Library.register_uuid
+
+Создает запись о типе объектов в хранилище `uuids`.
+
+Сигнатура метода: `Library.register_uuid(name: str, uuid: str) -> None`.
+
+Для сохранения данных о типе необходимо дать его наименование для обращения из хранилища, а так же его uuid.
+
+Использование:
+```python
+>>> Library.register_uuid("Custom", "00000000-1111-2222-3333-444444444444")
+>>> Library.uuids.Custom
+"00000000-1111-2222-3333-444444444444"
+```
+
+Как правило, этот метод не используется напрямую, поскольку для работы хватает загрузки при помощи
+[`load_from_help`](#libraryregister_uuid). Однако, если по какой-либо причине невозможно или нет смысла использовать
+этот метод, то можно вручную воспользоваться `register_uuid`.
 
 
 
 ### services
 
 Для обращения к сервисам Web API Elma используется `ElmaAPI`:
+
 ```python
-from elma import ElmaAPI
+from elmawebapi import ElmaAPI
 
 API = ElmaAPI(host, username, password, token)
 ```
@@ -227,14 +303,14 @@ API = ElmaAPI(host, username, password, token)
 `elma`:
 
 ```python
-from elma import ElmaError
+from elmawebapi import ElmaError
 
 ...
 
 try:
-    ...
+  ...
 except ElmaError:
-    ...
+  ...
 ```
 
 
@@ -473,13 +549,15 @@ params={
 пустоту. Если проверка не проходит, то декоратор изменяет `headers` через метод `ElmaAPI.reconnect`.
 
 Использование:
+
 ```python
-from elma.services import decorators
-from elma.services.base import Service
+from elmawebapi.services import decorators
+from elmawebapi.services.base import Service
+
 
 class NewService(Service):
-    @decorators.needs_auth
-    def Method(self, *args, **kwargs): ...
+  @decorators.needs_auth
+  def Method(self, *args, **kwargs): ...
 ```
 
 
@@ -496,15 +574,18 @@ class NewService(Service):
 Остальные параметры будут напрямую переданы в метод.
 
 Использование:
+
 ```python
-from elma.services import decorators
-from elma.services.base import Service
+from elmawebapi.services import decorators
+from elmawebapi.services.base import Service
+
 
 class NewService(Service):
-    @decorators.get(url="/Service/Method")
-    def GetMethod(self, result, uid, *args, **kwargs):
-        # допустим, что по адресу "/Service/Method/{type_uid}?Id={id}" возвращается переданный Id в запросе
-        return result["Id"], uid
+  @decorators.get(url="/Service/Method")
+  def GetMethod(self, result, uid, *args, **kwargs):
+    # допустим, что по адресу "/Service/Method/{type_uid}?Id={id}" возвращается переданный Id в запросе
+    return result["Id"], uid
+
 
 ...
 
@@ -527,16 +608,19 @@ class NewService(Service):
 Остальные параметры будут напрямую переданы в метод.
 
 Использование:
+
 ```python
-from elma.services import decorators
-from elma.services.base import Service
+from elmawebapi.services import decorators
+from elmawebapi.services.base import Service
+
 
 class NewService(Service):
-    @decorators.post(url="/Service/Method")
-    def PostMethod(self, result, uid, *args, **kwargs):
-        # допустим, что при передаче Id в POST-запросе на адрес "/Service/Method/{type_uid}" возвращается 
-        # этот самый Id
-        return result["Id"], uid
+  @decorators.post(url="/Service/Method")
+  def PostMethod(self, result, uid, *args, **kwargs):
+    # допустим, что при передаче Id в POST-запросе на адрес "/Service/Method/{type_uid}" возвращается 
+    # этот самый Id
+    return result["Id"], uid
+
 
 ...
 

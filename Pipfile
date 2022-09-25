@@ -5,11 +5,13 @@ name = "pypi"
 
 [packages]
 requests = "*"
+elmawebapi = {editable = true, path = "."}
 
 [dev-packages]
 ipython = "*"
 black = "*"
 flake8 = "*"
+pytest = "*"
 
 [requires]
 python_version = "3.10"

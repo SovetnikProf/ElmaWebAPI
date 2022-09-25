@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ElmaWebAPI"
+description = "Using Elma3 Web API from python"
+version = "0.1.0"
+readme = "README.md"
+license = {file = "LICENSE"}
+requires-python = ">=3.10"
+dependencies = ["requests~=2.28"]
+
+[project.optional-dependencies]
+tests = [
+    "flake8 ~= 5.0",
+    "pytest ~= 7.1"
+]
+dev = [
+    "ipython ~= 8.4",
+    "black ~= 22.8",
+    "flake8 ~= 5.0"
+]
+
+[tool.setuptools]
+packages = ["elmawebapi"]
+package-dir = {"" = "src"}
+
+[tool.black]
+line-length = 120

@@ -1,4 +1,4 @@
-from . import base, decorators
+from . import base
 
 
 class FilesService(base.Service):
