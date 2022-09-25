@@ -61,7 +61,7 @@ from elmawebapi import Parser
 Все вложенные элементы будут преобразованы по тому же принципу, что и внешние.
 
 Примеры:
-```python
+```pycon
 >>> Parser.normalize({"Items": [ {"Name": "Uid", "Value": "token", "Data": None, "DataArray": []} ]})
 {"Uid": "token"}
 
@@ -100,7 +100,7 @@ from elmawebapi import Parser
 Все вложенные элементы будут преобразованы по тому же принципу, что и внешние.
 
 Примеры:
-```python
+```pycon
 >>> Parser.uglify({"Uid": "token"})
 {"Items": [{"Name": "Uid", "Value": "token", "Data": None, "DataArray": []}], "Value"}
 
@@ -147,7 +147,7 @@ from elmawebapi import Parser
 уникальным.
 
 Примеры:
-```python
+```pycon
 >>> Parser.unwrap([{"Id": "1", "Value": "value"}, {"Id": "2", "Value": "string"}])
 {"1": {"Value": "value"}, "2": {"Value": "string"}}
 
@@ -195,14 +195,14 @@ Library.uuids.Contractor == "1fb7545c-b103-44b1-9b01-dacb986db75d"  # True
 По умолчанию `url = "/API/Help/Types"` — ссылка на страницу с данными на хосте.
 
 Использование:
-```python
+```pycon
 >>> Library.load_from_help(elma_host)
 >>> Library.uuid.Contractor
 "1fb7545c-b103-44b1-9b01-dacb986db75d"
 ```
 
-Поскольку данных о _ProcessHeaderId_ и тем более _ProcessToken_ в справке не находится, то для заполнения данных о них
-используется метод `register_process`.
+Поскольку данных о _ProcessHeaderId_ и, тем более, _ProcessToken_ в справке не находится, то для заполнения данных
+о них используется метод `register_process`.
 
 #### Library.register_process
 
@@ -215,7 +215,7 @@ Library.uuids.Contractor == "1fb7545c-b103-44b1-9b01-dacb986db75d"  # True
 `None`.
 
 Использование:
-```python
+```pycon
 >>> Library.register_process("ProcessWithHeader", header=10)
 >>> Library.register_process("ProcessWithToken", token="00000000-1111-2222-3333-444444444444")
 >>> Library.register_process("ProcessWithBoth", header=11, token="11111111-2222-3333-4444-555555555555")
@@ -238,7 +238,7 @@ Library.uuids.Contractor == "1fb7545c-b103-44b1-9b01-dacb986db75d"  # True
 Для сохранения данных о типе необходимо дать его наименование для обращения из хранилища, а так же его uuid.
 
 Использование:
-```python
+```pycon
 >>> Library.register_uuid("Custom", "00000000-1111-2222-3333-444444444444")
 >>> Library.uuids.Custom
 "00000000-1111-2222-3333-444444444444"
@@ -326,7 +326,7 @@ except ElmaError:
 Сигнатура метода: `AuthService.LoginWithUserName(username: str, password: str, app_token: str) -> dict`.
 
 Использование:
-```python
+```pycon
 >>> API.AuthService.LoginWithUserName(username, password, token)
 {"ApplicationToken": ..., "Content-Type": ..., "AuthToken": ..., "SessionToken": ...}
 ```
@@ -340,7 +340,7 @@ except ElmaError:
 Сигнатура метода: `AuthService.ServerTime() -> datetime`.
 
 Использование:
-```python
+```pycon
 >>> API.AuthService.ServerTime()
 2022-08-23 20:13:54.303000+03:00
 ```
@@ -363,7 +363,7 @@ params={"type": TypeUID, "id": EntityID}
 где `TypeUID` — uid типа загружаемого объекта в виде строки, `EntityID` — id загружаемого объекта.
 
 Использование:
-```python
+```pycon
 >>> API.EntityService.Load(params={"type": Library.uuids.ContractorLegal, "id": 53827})["BKUKlient"]
 True
 ```
@@ -388,7 +388,7 @@ params={
 `filterProviderUid`, `filterProviderData`, `filter` — параметры для фильтров провайдера фильтрации Elma.
 
 Использование:
-```python
+```pycon
 >>> API.EntityService.Count(params={"type": Library.uuids.SLA, "q": "ResponseSpeed='2 р/ч'"})
 9
 ```
@@ -414,7 +414,7 @@ params={
 `filterProviderUid`, `filterProviderData`, `filter` — параметры для фильтров провайдера фильтрации Elma.
 
 Использование:
-```python
+```pycon
 >>> API.EntityService.Query(params={"type": Library.uuids.SLA, "q": "ResponseSpeed='2 р/ч'"})
 [{'Id': '32', 'TypeUid': '2fd01a0d-0784-44e2-bd8c-231acb60e049', 'Uid': '9047d294-c00b-49bc-a4da-978d979e4aa5',
 'CreationDate': '07/06/2021 11:23:00', 'C_Id': '000032', 'FullName': None, 'Name': ...}]
@@ -429,7 +429,7 @@ params={
 Сигнатура метода: `EntityService.Insert(entityData: dict, typeuid: str) -> int`.
 
 Использование:
-```python
+```pycon
 >>> id = API.EntityService.Insert(
 ...     typeuid=Library.uuids.UgF,
 ...     entityData=Parser.uglify(
@@ -454,7 +454,7 @@ params={
 Сигнатура метода: `EntityService.Update(entityData: dict, typeuid: str, entityid: int) -> int`.
 
 Использование:
-```python
+```pycon
 >>> id = API.EntityService.Update(
 ...     typeuid=Library.uuids.UgF,
 ...     entityid=385,
@@ -491,7 +491,7 @@ params={
 Сигнатура метода: `WorkflowService.StartableProcesses() -> dict`.
 
 Использование:
-```python
+```pycon
 >>> API.WorkflowService.StartableProcesses()
 {'Groups': [{'Id': '21', 'Name': 'Django/Helpdesk'}, {'Id': '12', 'Name': 'Учетные процессы'}, ...],
 'Processes': [{'Id': '178', 'Name': '03. Перенос контактных данных', 'GroupId': '21'},
@@ -520,7 +520,7 @@ params={
 мониторинге процессов (он будет написан в url: `InstanceFilter.ProcessHeader.Id=<нужное число>`)
 
 Использование:
-```python
+```pycon
 >>> API.WorkflowService.StartProcess(
 ...     process_header=Library.process_headers.System02A,
 ...     context={
@@ -581,14 +581,12 @@ from elmawebapi.services.base import Service
 
 
 class NewService(Service):
-  @decorators.get(url="/Service/Method")
-  def GetMethod(self, result, uid, *args, **kwargs):
-    # допустим, что по адресу "/Service/Method/{type_uid}?Id={id}" возвращается переданный Id в запросе
-    return result["Id"], uid
-
-
-...
-
+    @decorators.get(url="/Service/Method")
+    def GetMethod(self, result, uid, *args, **kwargs):
+        # допустим, что по адресу "/Service/Method/{type_uid}?Id={id}" возвращается переданный Id в запросе
+        return result["Id"], uid
+```
+```pycon
 >>> type_uid = "1fb7545c-b103-44b1-9b01-dacb986db75d"
 >>> API.NewService.GetMethod(params={"Id": 20}, uri=f"/Service/Method/{type_uid}/", uid=type_uid)
 20, '1fb7545c-b103-44b1-9b01-dacb986db75d'
@@ -615,15 +613,13 @@ from elmawebapi.services.base import Service
 
 
 class NewService(Service):
-  @decorators.post(url="/Service/Method")
-  def PostMethod(self, result, uid, *args, **kwargs):
-    # допустим, что при передаче Id в POST-запросе на адрес "/Service/Method/{type_uid}" возвращается 
-    # этот самый Id
-    return result["Id"], uid
-
-
-...
-
+    @decorators.post(url="/Service/Method")
+    def PostMethod(self, result, uid, *args, **kwargs):
+        # допустим, что при передаче Id в POST-запросе на адрес "/Service/Method/{type_uid}" возвращается 
+        # этот самый Id
+        return result["Id"], uid
+```
+```pycon
 >>> type_uid = "1fb7545c-b103-44b1-9b01-dacb986db75d"
 >>> API.NewService.PostMethod(data={"Id": 20}, uri=f"/Service/Method/{type_uid}/", uid=type_uid)
 20, '1fb7545c-b103-44b1-9b01-dacb986db75d'

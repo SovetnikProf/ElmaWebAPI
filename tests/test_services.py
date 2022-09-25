@@ -25,8 +25,7 @@ def handle_connection_errors(func):
 class SetUpMixin:
     def setUp(self) -> None:
         self.API = ElmaAPI(HOST, USER, PASSWORD, TOKEN)
-        self.library = Library()
-        self.library.load_from_help(HOST)
+        Library.load_from_help(HOST)
 
 
 class TestAuth(SetUpMixin, unittest.TestCase):
@@ -60,12 +59,12 @@ class TestAuth(SetUpMixin, unittest.TestCase):
 class TestEntity(SetUpMixin, unittest.TestCase):
     @handle_connection_errors
     def test_load(self):
-        contractor = self.API.EntityService.Load(params={"type": self.library.uuids.ContractorLegal, "id": "3"})
+        contractor = self.API.EntityService.Load(params={"type": Library.uuids.ContractorLegal, "id": "3"})
         self.assertEqual(contractor["Id"], "3")
 
     @handle_connection_errors
     def test_count(self):
-        count = self.API.EntityService.Count(params={"type": self.library.uuids.ContractorLegal, "q": "Id = 3"})
+        count = self.API.EntityService.Count(params={"type": Library.uuids.ContractorLegal, "q": "Id = 3"})
         self.assertEqual(count, 1)
 
     @handle_connection_errors
