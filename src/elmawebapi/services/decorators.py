@@ -1,11 +1,11 @@
+import json
 from typing import TYPE_CHECKING
 
 from .error import ElmaError
 
-import json
-
 if TYPE_CHECKING:
     import requests
+
     from .base import Service
 
 
@@ -172,7 +172,7 @@ def get(url: str):
             def repeat(url):
                 nonlocal self, retries
                 with self.session as session:
-                    session: requests.Session
+                    session: "requests.Session"
                     response = session.get(url)
 
                 if response.status_code != 200:

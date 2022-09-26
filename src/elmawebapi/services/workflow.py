@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING
 
-from . import base, decorators
 from ..structure import Parser
+from . import base, decorators
 
 if TYPE_CHECKING:
     from requests import Response
@@ -12,12 +12,15 @@ STARTABLE_PROCESSES = "/API/REST/Workflow/StartableProcesses"
 
 
 class WorkflowService(base.Service):
-    """Сервис для работы с процессами"""
+    """
+    Реализация сервиса работы с процессами Workflow.
+    """
 
     @decorators.needs_auth
     @decorators.post(url=START_PROCESS_ASYNC)
     def _start_process(self, result: "Response") -> dict:
-        """Стандартная функция API элмы для запуска процесса.
+        """
+        Стандартная функция API элмы для запуска процесса.
 
         На вход необходимо передать словарь. Для конкретизации процесса в словаре должен быть один из двух следующих
         параметров:
@@ -39,15 +42,11 @@ class WorkflowService(base.Service):
         """
         return Parser.normalize(result.json())
 
-    @decorators.needs_auth
-    @decorators.post(url=STARTABLE_PROCESSES)
-    def StartableProcesses(self, result: "Response"):
-        return Parser.normalize(result.json())
-
     def StartProcess(
         self, *, process_header: int = 0, process_token: str = "", process_name: str = "", context: dict | None = None
     ) -> dict:
-        """Запуск процесса в элме. Выбор производится через Id заголовка процесса process_header или же через
+        """
+        Запуск процесса в элме. Выбор производится через Id заголовка процесса process_header или же через
         токен запуска процесса process_token. Если процесс в элме не имеет автоматическую генерацию наименований
         экземпляров, то необходимо передать параметр process_name.
 
@@ -83,4 +82,15 @@ class WorkflowService(base.Service):
             data["ProcessName"] = process_name
 
         data = Parser.uglify(data)
-        return self._start_process(data=data)
+        return self._start_process(data=data)  # pylint: disable=E1120,E1123
+
+    @decorators.needs_auth
+    @decorators.post(url=STARTABLE_PROCESSES)
+    def StartableProcesses(self, result: "Response"):
+        """
+        Получить список запускаемых процессов и их групп.
+
+        Поскольку это POST-запрос, но данных передавать не надо, то параметр ``data`` можно опустить, поскольку по
+        умолчанию он равен пустому словарю.
+        """
+        return Parser.normalize(result.json())

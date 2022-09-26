@@ -1,8 +1,7 @@
+from dataclasses import dataclass
 from typing import TYPE_CHECKING, NamedTuple
 
 from .services import AuthService, EntityService, FeedService, FilesService, TaskService, WorkflowService
-
-from dataclasses import dataclass
 
 if TYPE_CHECKING:
     Credentials = NamedTuple("Credentials", [("username", str), ("password", str), ("apptoken", str)])
@@ -10,6 +9,10 @@ if TYPE_CHECKING:
 
 @dataclass(frozen=True)
 class Settings:
+    """
+    Настройки инстанса API.
+    """
+
     host: str
     username: str
     password: str
@@ -18,6 +21,10 @@ class Settings:
 
 
 class API:
+    """
+    Корневой объект для обращения к сервисам API.
+    """
+
     # fmt: off
     __slots__ = (
         "AuthService", "EntityService", "FeedService", "FilesService", "TaskService", "WorkflowService",
@@ -38,13 +45,25 @@ class API:
         self.headers = self.reconnect()
 
     def reconnect(self) -> dict:
+        """
+        (Пере-)подключиться к серверу Elma.
+
+        Returns:
+            dict: словарь заголовков для сессии.
+        """
         headers = self.AuthService.LoginWithUserName(*self.credentials)
         return headers
 
     @property
     def host(self) -> str:
+        """
+        Адрес сервера Elma.
+        """
         return self.settings.host
 
     @property
     def credentials(self) -> "Credentials":
+        """
+        Данные для подключения к серверу.
+        """
         return self.settings.username, self.settings.password, self.settings.apptoken

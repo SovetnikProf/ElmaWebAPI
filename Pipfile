@@ -10,8 +10,12 @@ elmawebapi = {editable = true, path = "."}
 [dev-packages]
 ipython = "*"
 black = "*"
-flake8 = "*"
 pytest = "*"
+#mypy = "*"
+pytest-cov = "*"
+tox = "*"
+isort = "*"
+pylint = "*"
 
 [requires]
 python_version = "3.10"

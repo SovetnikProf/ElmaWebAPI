@@ -2,4 +2,6 @@ from . import base
 
 
 class TaskService(base.Service):
-    pass
+    """
+    Реализация сервиса работы с задачами Tasks.
+    """

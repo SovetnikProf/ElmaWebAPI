@@ -1,6 +1,8 @@
-from elmawebapi import Parser
-
 import unittest
+
+import pytest
+
+from elmawebapi import Parser
 
 
 class TestNormalize(unittest.TestCase):
@@ -43,6 +45,10 @@ class TestNormalize(unittest.TestCase):
             }
         )
         self.assertDictEqual(x, {"SubjectRF": {"Id": "10"}})
+
+    def test_exception(self):
+        with pytest.raises(TypeError):
+            Parser.normalize("")
 
 
 class TestUglify(unittest.TestCase):
@@ -91,6 +97,30 @@ class TestUglify(unittest.TestCase):
                 "Value": "",
             },
         )
+
+    def test_data_dataarray(self):
+        x = Parser.uglify({"SubjectRF": [{"Id": "1"}, {"Id": "2"}]})
+        self.assertDictEqual(
+            x,
+            {
+                "Items": [
+                    {
+                        "Name": "SubjectRF",
+                        "Value": "",
+                        "Data": None,
+                        "DataArray": [
+                            {"Items": [{"Name": "Id", "Value": "1", "Data": None, "DataArray": []}], "Value": ""},
+                            {"Items": [{"Name": "Id", "Value": "2", "Data": None, "DataArray": []}], "Value": ""},
+                        ],
+                    }
+                ],
+                "Value": "",
+            },
+        )
+
+    def test_exception(self):
+        with pytest.raises(TypeError):
+            Parser.uglify("")
 
 
 class TestUtils(unittest.TestCase):

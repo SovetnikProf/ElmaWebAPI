@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING
 
-from . import base, decorators
 from ..structure import Parser
+from . import base, decorators
 
 if TYPE_CHECKING:
     from requests import Response

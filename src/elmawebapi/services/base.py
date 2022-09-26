@@ -7,13 +7,20 @@ if TYPE_CHECKING:
 
 
 class Service:
-    __slots__ = "parent"
+    """
+    Базовый класс для сервисов.
+    """
+
+    __slots__ = ("parent",)
 
     def __init__(self, parent: "API"):
         self.parent = parent
 
     @property
     def session(self) -> requests.Session:
+        """
+        Сессия для взаимодействия с сервером Elma.
+        """
         session = requests.Session()
         session.headers = self.parent.headers
         return session

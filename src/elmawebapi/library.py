@@ -1,38 +1,77 @@
+from dataclasses import dataclass
 from html.parser import HTMLParser
 
-from dataclasses import dataclass
 import requests
 
 
 @dataclass(frozen=True)
 class Process:
+    """
+    Данные о процессе.
+    """
+
     header: int | None = None
     token: str | None = None
 
 
 class LibraryClass:
-    # empty classes for depots
-    uuids = (type("UUIDs", (object,), {}))()
-    processes = (type("Processes", (object,), {}))()
+    """
+    Хранилище данных для взаимодействия с Elma.
+    """
+
+    uuids = (type("UUIDs", (object,), {}))()  # empty classes for depots
+    processes = (type("Processes", (object,), {}))()  # empty classes for depotsи
 
     def register_uuid(self, name: str, uuid: str) -> None:
+        """
+        Зарегистрировать тип данных.
+
+        Args:
+            name: имя типа данных для доступа через uuids.<name>
+            uuid: значение uuid
+        """
         setattr(self.uuids, name, uuid)
 
     def register_process(self, name: str, *, header: int = None, token: str = None) -> None:
-        if not header and not token:
+        """
+        Зарегистрировать процесс.
+
+        Args:
+            name: имя процесса для доступа через processes.<name>
+            header: ProcessHeaderId процесса
+            token: токен запуска процесса
+
+        Raises:
+            ValueError: при передаче некорректных данных
+        """
+        if not isinstance(header, int) and not isinstance(token, str) or not header and not token:
             raise ValueError("Некорректные аргументы для регистрации процесса")
 
         setattr(self.processes, name, Process(header=header, token=token))
 
-    def load_from_help(self, host, url: str = "API/Help/Types") -> None:
+    def load_from_help(self, host: str, url: str = "API/Help/Types") -> None:
+        """
+        Загрузить типы данных со страницы Elma.
+
+        Args:
+            host: адрес сервера Elma
+            url: адрес страницы со списком типов данных
+
+        Raises:
+            ConnectionError: при ошибке получения данных со страницы
+        """
         address = f'{host.strip("/")}/{url.strip("/")}/'
 
         try:
             page = str(requests.get(address).content)
-        except requests.RequestException as e:
-            raise RuntimeError(f"Невозможно получить страницу по адресу {address}").with_traceback(e.__traceback__)
+        except requests.RequestException as err:
+            raise ConnectionError(f"Невозможно получить страницу по адресу {address}").with_traceback(err.__traceback__)
 
         class Parser(HTMLParser):
+            """
+            Парсер HTML для сохранения uid-ов и имен типов данных.
+            """
+
             types = []
             current_uid = None
 

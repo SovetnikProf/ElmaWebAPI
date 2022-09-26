@@ -13,13 +13,16 @@ dependencies = ["requests~=2.28"]
 
 [project.optional-dependencies]
 tests = [
-    "flake8 ~= 5.0",
-    "pytest ~= 7.1"
+    "pytest ~= 7.1",
+    "pytest-cov~=3.0",
+    "mypy~=0.970",
+    "pylint~=3.0",
+    "tox~=4.0"
 ]
 dev = [
-    "ipython ~= 8.4",
-    "black ~= 22.8",
-    "flake8 ~= 5.0"
+    "ipython~=8.4",
+    "black~=22.8",
+    "isort~=5.10"
 ]
 
 [tool.setuptools]
@@ -28,3 +31,33 @@ package-dir = {"" = "src"}
 
 [tool.black]
 line-length = 120
+force-exclude = "README.md"
+
+[tool.pylint.format]
+max-line-length = 120
+disable = ["C0103", "C0114", "R0902", "R0903", "R0913", "W0613"]
+
+[tool.isort]
+profile = "black"
+line_length = 120
+
+[tool.pytest.ini_options]
+addopts = "--cov=elmawebapi"
+testpaths = ["tests"]
+
+[tool.coverage.report]
+exclude_lines = ["pragma: no cover", "if TYPE_CHECKING:"]
+
+[tool.mypy]
+mypy_path = "src"
+check_untyped_defs = true
+disallow_any_generics = true
+ignore_missing_imports = true
+no_implicit_optional = true
+show_error_codes = true
+strict_equality = true
+warn_redundant_casts = true
+warn_return_any = true
+warn_unreachable = true
+warn_unused_configs = true
+no_implicit_reexport = true

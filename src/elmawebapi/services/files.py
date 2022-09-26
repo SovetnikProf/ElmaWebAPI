@@ -2,4 +2,6 @@ from . import base
 
 
 class FilesService(base.Service):
-    pass
+    """
+    Реализация сервиса работы с файлами IFilesService.
+    """

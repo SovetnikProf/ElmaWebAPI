@@ -2,4 +2,6 @@ from . import base
 
 
 class FeedService(base.Service):
-    pass
+    """
+    Реализация сервиса работы с сообщениями IMessageFeedService и Messages.
+    """

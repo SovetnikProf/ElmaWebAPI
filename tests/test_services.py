@@ -1,16 +1,15 @@
-from elmawebapi import ElmaAPI, Parser, Library
+import os
+import unittest
+from datetime import datetime, timedelta, timezone
 
 import pytest
-import unittest
-from datetime import datetime, timezone, timedelta
 
-HOST = "http://bpm-demo.elma-bpm.ru/"
-TOKEN = (
-    "0145B63A7C45B1408E9C983A2756E0EF7C3079EBA24E34D39047E8745383146B"
-    "3515B112CF50B0D393077031585DE076FADEE11C44459EFB5AE89D91C4A1604E"
-)
-USER = "bpm_portal_execution"
-PASSWORD = "bpm_portal_execution"
+from elmawebapi import ElmaAPI, Library, Parser
+
+HOST = os.environ.get("HOST")
+USER = os.environ.get("USER")
+PASSWORD = os.environ.get("PASSWORD")
+TOKEN = os.environ.get("TOKEN")
 
 
 def handle_connection_errors(func):
@@ -19,16 +18,20 @@ def handle_connection_errors(func):
             return func(*args, **kwargs)
         except ConnectionError:
             pytest.skip("Skipping ConnectionError")
+
     return wrapper
 
 
-class SetUpMixin:
-    def setUp(self) -> None:
-        self.API = ElmaAPI(HOST, USER, PASSWORD, TOKEN)
-        Library.load_from_help(HOST)
+@pytest.fixture(scope="class")
+def api_mixin(request):
+    if HOST is None:
+        pytest.skip("Needs .env filled with HOST, USER, PASSWORD and TOKEN parameters")
+    request.cls.API = ElmaAPI(HOST, USER, PASSWORD, TOKEN)
+    Library.load_from_help(HOST)
 
 
-class TestAuth(SetUpMixin, unittest.TestCase):
+@pytest.mark.usefixtures("api_mixin")
+class TestAuth(unittest.TestCase):
     @handle_connection_errors
     def test_reconnect_needs_auth(self):
         # ломаем авторизацию, но так, чтобы декоратор needs_auth обратил на это внимание
@@ -55,31 +58,37 @@ class TestAuth(SetUpMixin, unittest.TestCase):
         dt = self.API.AuthService.ServerTime()
         self.assertIsNotNone(dt)  # как это тестировать?
 
+    @handle_connection_errors
+    def test_exceptions(self):
+        with pytest.raises(ValueError):
+            ElmaAPI(HOST, USER, "nopassword", TOKEN)
+        with pytest.raises(ConnectionError):
+            ElmaAPI("http://a.abcdef/", USER, PASSWORD, TOKEN)
 
-class TestEntity(SetUpMixin, unittest.TestCase):
+
+@pytest.mark.usefixtures("api_mixin")
+class TestEntity(unittest.TestCase):
     @handle_connection_errors
     def test_load(self):
-        contractor = self.API.EntityService.Load(params={"type": Library.uuids.ContractorLegal, "id": "3"})
-        self.assertEqual(contractor["Id"], "3")
+        contractor = self.API.EntityService.Load(params={"type": Library.uuids.ContractorLegal, "id": "54124"})
+        self.assertEqual(contractor["Id"], "54124")
 
     @handle_connection_errors
     def test_count(self):
-        count = self.API.EntityService.Count(params={"type": Library.uuids.ContractorLegal, "q": "Id = 3"})
+        count = self.API.EntityService.Count(params={"type": Library.uuids.ContractorLegal, "q": "Id = 54124"})
         self.assertEqual(count, 1)
 
     @handle_connection_errors
     def test_query(self):
         query = self.API.EntityService.Query(
-            params={"type": Library.uuids.ContractorLegal, "q": "Id in (0, 2, 3)", "sort": "Id"}
+            params={"type": Library.uuids.ContractorLegal, "q": "Id in (0, 53849, 54124)", "sort": "Id"}
         )
-        self.assertEqual(query[0]["Id"], "2")
-        self.assertEqual(query[1]["Id"], "3")
+        self.assertEqual(query[0]["Id"], "53849")
+        self.assertEqual(query[1]["Id"], "54124")
 
     @unittest.skip
     def test_insert(self):
-        pk = self.API.EntityService.Insert(
-            Parser.uglify({"Name": "Тест"}), Library.uuids.ContractorLegal
-        )
+        pk = self.API.EntityService.Insert(Parser.uglify({"Name": "Тест"}), Library.uuids.ContractorLegal)
         self.assertEqual(pk, 7)
 
     @unittest.skip
@@ -91,7 +100,8 @@ class TestEntity(SetUpMixin, unittest.TestCase):
         self.assertEqual(obj["Name"], new_name)
 
 
-class TestWorkflow(SetUpMixin, unittest.TestCase):
+@pytest.mark.usefixtures("api_mixin")
+class TestWorkflow(unittest.TestCase):
     @handle_connection_errors
     def test_startable(self):
         startable = self.API.WorkflowService.StartableProcesses()
