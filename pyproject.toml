@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ElmaWebAPI"
-version = "0.1.2"
+version = "0.1.3"
 authors = [
     { name="Ilya Chechetkin", email="illaech@gmail.com" },
 ]
@@ -41,8 +41,10 @@ dev = [
 ]
 
 [tool.setuptools]
-packages = ["elmawebapi"]
 package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
 
 [tool.black]
 line-length = 120
