@@ -25,13 +25,6 @@ class API:
     Корневой объект для обращения к сервисам API.
     """
 
-    # fmt: off
-    __slots__ = (
-        "AuthService", "EntityService", "FeedService", "FilesService", "TaskService", "WorkflowService",
-        "settings", "headers"
-    )
-    # fmt: on
-
     def __init__(self, host: str, username: str, password: str, token: str, max_retries: int = 5):
         self.settings = Settings(host.rstrip("/"), username, password, token, max_retries=max_retries)
 
