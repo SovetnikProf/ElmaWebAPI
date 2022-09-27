@@ -87,7 +87,9 @@ def post(url: str):
                 nonlocal self, retries
                 with self.session as session:
                     session: "requests.Session"
-                    response = session.post(url, data=json.dumps(datadict, ensure_ascii=False).encode("utf-8"))
+                    response = session.post(
+                        url, data=json.dumps(datadict, ensure_ascii=False).encode("utf-8"), timeout=120
+                    )
 
                 if response.status_code != 200:
                     if (
@@ -173,7 +175,7 @@ def get(url: str):
                 nonlocal self, retries
                 with self.session as session:
                     session: "requests.Session"
-                    response = session.get(url)
+                    response = session.get(url, timeout=120)
 
                 if response.status_code != 200:
                     if (

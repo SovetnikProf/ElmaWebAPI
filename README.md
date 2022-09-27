@@ -1,6 +1,7 @@
 # Elma Web-API Connector (ElmaWebAPI)
 
 [![Project version](https://img.shields.io/pypi/v/elmawebapi.svg)](https://pypi.python.org/pypi/elmawebapi)
+![Test coverage](assets/coverage.svg)
 
 Библиотека, предоставляющая упрощенный способ взаимодействия с
 [Web API Elma3](https://www.elma-bpm.ru/KB/article-5613.html) из python.

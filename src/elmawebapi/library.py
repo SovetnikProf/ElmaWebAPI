@@ -63,7 +63,7 @@ class LibraryClass:
         address = f'{host.strip("/")}/{url.strip("/")}/'
 
         try:
-            page = str(requests.get(address).content)
+            page = str(requests.get(address, timeout=120).content)
         except requests.RequestException as err:
             raise ConnectionError(f"Невозможно получить страницу по адресу {address}").with_traceback(err.__traceback__)
 

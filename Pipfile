@@ -11,14 +11,11 @@ elmawebapi = {editable = true, path = "."}
 ipython = "*"
 black = "*"
 pytest = "*"
-#mypy = "*"
 pytest-cov = "*"
-tox = "*"
 isort = "*"
 pylint = "*"
+coverage-badge = "*"
+#mypy = "*"
 
 [requires]
 python_version = "3.10"
-
-[pipenv]
-allow_prereleases = true
