@@ -1,4 +1,4 @@
-### Хранение типов данных и информации о процессах `Library`
+# Хранение типов данных и информации о процессах `Library`
 
 
 - [работа с API-сервисами Elma _ElmaAPI_](services.md)
@@ -37,7 +37,7 @@ Library.uuids.Contractor == "1fb7545c-b103-44b1-9b01-dacb986db75d"  # True
 
 ## Library.load_from_help
 
-<sub>[↺ к оглавлению](#-------library)
+<sub>[↺ к оглавлению](#хранение-типов-данных-и-информации-о-процессах-library)
 · [↓ _Library.register_process_](#libraryregister_process)
 </sub>
 
@@ -64,7 +64,7 @@ Library.uuids.Contractor == "1fb7545c-b103-44b1-9b01-dacb986db75d"  # True
 Поскольку данных о _ProcessHeaderId_ и, тем более, _ProcessToken_ в справке не находится, то для заполнения данных
 о них используется метод `register_process`.
 
-<sub>[↺ к оглавлению](#-------library)
+<sub>[↺ к оглавлению](#хранение-типов-данных-и-информации-о-процессах-library)
 · [↑ _Library.load_from_help_](#libraryload_from_help)
 · [↓ _Library.register_uuid_](#libraryregister_uuid)
 </sub>
@@ -95,7 +95,7 @@ Library.uuids.Contractor == "1fb7545c-b103-44b1-9b01-dacb986db75d"  # True
 
 ## Library.register_uuid
 
-<sub>[↺ к оглавлению](#-------library)
+<sub>[↺ к оглавлению](#хранение-типов-данных-и-информации-о-процессах-library)
 · [↑ _Library.register_process_](#libraryregister_process)
 · [↓ _LibraryClass_](#libraryclass)
 </sub>
@@ -120,7 +120,7 @@ Library.uuids.Contractor == "1fb7545c-b103-44b1-9b01-dacb986db75d"  # True
 
 ## LibraryClass
 
-<sub>[↺ к оглавлению](#-------library)
+<sub>[↺ к оглавлению](#хранение-типов-данных-и-информации-о-процессах-library)
 · [↑ _Library.register_uuid_](#libraryregister_uuid)
 </sub>
 

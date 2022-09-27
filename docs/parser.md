@@ -50,7 +50,7 @@
 
 ## Parser.normalize
 
-<sub>[↺ к оглавлению](#--elma-parser)
+<sub>[↺ к оглавлению](#парсер-данных-elma-parser)
 · [↓ _Parser.uglify_](#parseruglify)
 </sub>
 
@@ -94,7 +94,7 @@
 
 ## Parser.uglify
 
-<sub>[↺ к оглавлению](#--elma-parser)
+<sub>[↺ к оглавлению](#парсер-данных-elma-parser)
 · [↑ _Parser.normalize_](#parsernormalize)
 · [↓ _Parser.parse_](#parserparse)
 </sub>
@@ -141,7 +141,7 @@
 
 ## Parser.parse
 
-<sub>[↺ к оглавлению](#--elma-parser)
+<sub>[↺ к оглавлению](#парсер-данных-elma-parser)
 · [↑ _Parser.uglify_](#parseruglify)
 · [↓ _Parser.unwrap_](#parserunwrap)
 </sub>
@@ -153,7 +153,7 @@
 
 ## Parser.unwrap
 
-<sub>[↺ к оглавлению](#--elma-parser)
+<sub>[↺ к оглавлению](#парсер-данных-elma-parser)
 · [↑ _Parser.parse_](#parserparse)
 </sub>
 

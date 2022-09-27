@@ -1,4 +1,4 @@
-### Работа с API-сервисами Elma `ElmaAPI`
+# Работа с API-сервисами Elma `ElmaAPI`
 
 
 - **работа с API-сервисами Elma _ElmaAPI_**
@@ -9,7 +9,7 @@
   - [_FilesService_](#filesservice)
   - [_TaskService_](#taskservice)
   - [_WorkflowService_](#workflowservice)
-  - [Собственные сервисы](#-)
+  - [Собственные сервисы](#собственные-сервисы)
 - [хранение типов данных и информации о процессах _Library_](library.md)
 - [парсер данных Elma _Parser_](parser.md)
 
@@ -60,7 +60,7 @@ API = ElmaAPI(host, username, password, token, max_retries=5)
 
 ## ElmaError
 
-<sub>[↺ к оглавлению](#--api--elma-elmaapi)
+<sub>[↺ к оглавлению](#работа-с-api-сервисами-elma-elmaapi)
 · [↓ _AuthService_](#authservice)
 </sub>
 
@@ -82,10 +82,10 @@ except ElmaError:
 
 ## AuthService
 
-<sub>[↺ к оглавлению](#--api--elma-elmaapi)
+<sub>[↺ к оглавлению](#работа-с-api-сервисами-elma-elmaapi)
 · [↑ _ElmaError_](#elmaerror)
 · [↳ _LoginWithUserName_](#loginwithusername-iauthorizationserviceloginwithusername)
-· [↓ _EntityService_](#authservice)
+· [↓ _EntityService_](#entityservice)
 </sub>
 
 
@@ -93,7 +93,7 @@ except ElmaError:
 
 ### LoginWithUserName (IAuthorizationService.LoginWithUserName)
 
-<sub>[↺ к оглавлению](#--api--elma-elmaapi)
+<sub>[↺ к оглавлению](#работа-с-api-сервисами-elma-elmaapi)
 · [⇑ _AuthService_](#authservice)
 · [↓ _ServerTime_](#servertime-iauthorizationserviceservertime)
 · [⇓ _EntityService_](#entityservice)
@@ -116,7 +116,7 @@ except ElmaError:
 
 ### ServerTime (IAuthorizationService.ServerTime)
 
-<sub>[↺ к оглавлению](#--api--elma-elmaapi)
+<sub>[↺ к оглавлению](#работа-с-api-сервисами-elma-elmaapi)
 · [⇑ _AuthService_](#authservice)
 · [↑ _LoginWithUserName_](#loginwithusername-iauthorizationserviceloginwithusername)
 · [↓ _ServerTimeUTC_](#servertimeutc-iauthorizationserviceservertimeutc)
@@ -137,7 +137,7 @@ except ElmaError:
 
 ### ServerTimeUTC (IAuthorizationService.ServerTimeUTC)
 
-<sub>[↺ к оглавлению](#--api--elma-elmaapi)
+<sub>[↺ к оглавлению](#работа-с-api-сервисами-elma-elmaapi)
 · [⇑ _AuthService_](#authservice)
 · [↑ _ServerTime_](#servertime-iauthorizationserviceservertime)
 · [⇓ _EntityService_](#entityservice)
@@ -157,7 +157,7 @@ except ElmaError:
 
 ## EntityService
 
-<sub>[↺ к оглавлению](#--api--elma-elmaapi)
+<sub>[↺ к оглавлению](#работа-с-api-сервисами-elma-elmaapi)
 · [↑ _AuthService_](#authservice)
 · [↳ _Load_](#load-ientityserviceload)
 · [↓ _FeedService_](#feedservice)
@@ -169,7 +169,7 @@ except ElmaError:
 
 ### Load (IEntityService.Load)
 
-<sub>[↺ к оглавлению](#--api--elma-elmaapi)
+<sub>[↺ к оглавлению](#работа-с-api-сервисами-elma-elmaapi)
 · [⇑ _EntityService_](#entityservice)
 · [↓ _Count_](#count-ientityservicecount)
 · [⇓ _FeedService_](#feedservice)
@@ -197,7 +197,7 @@ True
 
 ### Count (IEntityService.Count)
 
-<sub>[↺ к оглавлению](#--api--elma-elmaapi)
+<sub>[↺ к оглавлению](#работа-с-api-сервисами-elma-elmaapi)
 · [⇑ _EntityService_](#entityservice)
 · [↑ _Load_](#load-ientityserviceload)
 · [↓ _Query_](#query-ientityservicequery)
@@ -231,7 +231,7 @@ params={
 
 ### Query (IEntityService.Query)
 
-<sub>[↺ к оглавлению](#--api--elma-elmaapi)
+<sub>[↺ к оглавлению](#работа-с-api-сервисами-elma-elmaapi)
 · [⇑ _EntityService_](#entityservice)
 · [↑ _Count_](#count-ientityservicecount)
 · [↓ _Insert_](#insert-ientityserviceinsert)
@@ -267,7 +267,7 @@ params={
 
 ### Insert (IEntityService.Insert)
 
-<sub>[↺ к оглавлению](#--api--elma-elmaapi)
+<sub>[↺ к оглавлению](#работа-с-api-сервисами-elma-elmaapi)
 · [⇑ _EntityService_](#entityservice)
 · [↑ _Query_](#query-ientityservicequery)
 · [↓ _Update_](#update-ientityserviceupdate)
@@ -301,7 +301,7 @@ params={
 
 ### Update (IEntityService.Update)
 
-<sub>[↺ к оглавлению](#--api--elma-elmaapi)
+<sub>[↺ к оглавлению](#работа-с-api-сервисами-elma-elmaapi)
 · [⇑ _EntityService_](#entityservice)
 · [↑ _Insert_](#insert-ientityserviceinsert)
 · [⇓ _FeedService_](#feedservice)
@@ -328,7 +328,7 @@ params={
 
 ## FeedService
 
-<sub>[↺ к оглавлению](#--api--elma-elmaapi)
+<sub>[↺ к оглавлению](#работа-с-api-сервисами-elma-elmaapi)
 · [↑ _EntityService_](#entityservice)
 · [↓ _FilesService_](#filesservice)
 </sub>
@@ -339,7 +339,7 @@ params={
 
 ## FilesService
 
-<sub>[↺ к оглавлению](#--api--elma-elmaapi)
+<sub>[↺ к оглавлению](#работа-с-api-сервисами-elma-elmaapi)
 · [↑ _FeedService_](#feedservice)
 · [↓ _TaskService_](#taskservice)
 </sub>
@@ -350,7 +350,7 @@ params={
 
 ## TaskService
 
-<sub>[↺ к оглавлению](#--api--elma-elmaapi)
+<sub>[↺ к оглавлению](#работа-с-api-сервисами-elma-elmaapi)
 · [↑ _FilesService_](#filesservice)
 · [↓ _WorkflowService_](#workflowservice)
 </sub>
@@ -361,10 +361,10 @@ params={
 
 ## WorkflowService
 
-<sub>[↺ к оглавлению](#--api--elma-elmaapi)
+<sub>[↺ к оглавлению](#работа-с-api-сервисами-elma-elmaapi)
 · [↑ _TaskService_](#taskservice)
 · [↳ _StartableProcesses_](#startableprocesses-workflowstartableprocesses)
-· [↓ Собственные сервисы](#-)
+· [↓ Собственные сервисы](#собственные-сервисы)
 </sub>
 
 
@@ -373,10 +373,10 @@ params={
 
 ### StartableProcesses (Workflow.StartableProcesses)
 
-<sub>[↺ к оглавлению](#--api--elma-elmaapi)
+<sub>[↺ к оглавлению](#работа-с-api-сервисами-elma-elmaapi)
 · [⇑ _WorkflowService_](#workflowservice)
 · [↓ _StartProcess_](#startprocess-workflowstartprocessasync)
-· [⇓ Собственные сервисы](#-)
+· [⇓ Собственные сервисы](#собственные-сервисы)
 </sub>
 
 
@@ -397,10 +397,10 @@ params={
 
 ### StartProcess (Workflow.StartProcessAsync)
 
-<sub>[↺ к оглавлению](#--api--elma-elmaapi)
+<sub>[↺ к оглавлению](#работа-с-api-сервисами-elma-elmaapi)
 · [⇑ _WorkflowService_](#workflowservice)
 · [↑ _StartableProcesses_](#startableprocesses-workflowstartableprocesses)
-· [⇓ Собственные сервисы](#-)
+· [⇓ Собственные сервисы](#собственные-сервисы)
 </sub>
 
 
@@ -441,9 +441,9 @@ context: dict | None = None) -> dict`.
 
 ## Собственные сервисы
 
-<sub>[↺ к оглавлению](#--api--elma-elmaapi)
+<sub>[↺ к оглавлению](#работа-с-api-сервисами-elma-elmaapi)
 · [↑ _WorkflowService_](#workflowservice)
-· [↳ Базовый класс _Service_](#--service)
+· [↳ Базовый класс _Service_](#базовый-класс-service)
 </sub>
 
 
@@ -454,9 +454,9 @@ context: dict | None = None) -> dict`.
 
 ### Базовый класс Service
 
-<sub>[↺ к оглавлению](#--api--elma-elmaapi)
-· [⇑ Собственные сервисы](#-)
-· [↓ Декоратор _needs_auth_](#-needs_auth)
+<sub>[↺ к оглавлению](#работа-с-api-сервисами-elma-elmaapi)
+· [⇑ Собственные сервисы](#собственные-сервисы)
+· [↓ Декоратор _needs_auth_](#декоратор-needs_auth)
 </sub>
 
 
@@ -475,10 +475,10 @@ class NewService(Service): ...
 
 ### Декоратор needs_auth
 
-<sub>[↺ к оглавлению](#--api--elma-elmaapi)
-· [⇑ Собственные сервисы](#-)
-· [↑ Базовый класс _Service_](#--service)
-· [↓ Декоратор _get_](#-get)
+<sub>[↺ к оглавлению](#работа-с-api-сервисами-elma-elmaapi)
+· [⇑ Собственные сервисы](#собственные-сервисы)
+· [↑ Базовый класс _Service_](#базовый-класс-service)
+· [↓ Декоратор _get_](#декоратор-get)
 </sub>
 
 
@@ -500,10 +500,10 @@ class NewService(Service):
 
 ### Декоратор get
 
-<sub>[↺ к оглавлению](#--api--elma-elmaapi)
-· [⇑ Собственные сервисы](#-)
-· [↑ Декоратор _needs_auth_](#-needs_auth)
-· [↓ Декоратор _post_](#-post)
+<sub>[↺ к оглавлению](#работа-с-api-сервисами-elma-elmaapi)
+· [⇑ Собственные сервисы](#собственные-сервисы)
+· [↑ Декоратор _needs_auth_](#декоратор-needs_auth)
+· [↓ Декоратор _post_](#декоратор-post)
 </sub>
 
 
@@ -539,10 +539,10 @@ class NewService(Service):
 
 ### Декоратор post
 
-<sub>[↺ к оглавлению](#--api--elma-elmaapi)
-· [⇑ Собственные сервисы](#-)
-· [↑ Декоратор _get_](#-get)
-· [↓ Примеры использования в существующих сервисах](#----)
+<sub>[↺ к оглавлению](#работа-с-api-сервисами-elma-elmaapi)
+· [⇑ Собственные сервисы](#собственные-сервисы)
+· [↑ Декоратор _get_](#декоратор-get)
+· [↓ Примеры использования в существующих сервисах](#примеры-использования-в-существующих-сервисах)
 </sub>
 
 
@@ -579,9 +579,9 @@ class NewService(Service):
 
 ### Примеры использования в существующих сервисах
 
-<sub>[↺ к оглавлению](#--api--elma-elmaapi)
-· [⇑ Собственные сервисы](#-)
-· [↑ Декоратор _post_](#-post)
+<sub>[↺ к оглавлению](#работа-с-api-сервисами-elma-elmaapi)
+· [⇑ Собственные сервисы](#собственные-сервисы)
+· [↑ Декоратор _post_](#декоратор-post)
 </sub>
 
 
