@@ -6,6 +6,7 @@ build
 .pytest_cache
 .coverage
 htmlcov
+dist
 
 .env
 local.py

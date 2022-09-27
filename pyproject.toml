@@ -4,12 +4,27 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ElmaWebAPI"
+version = "0.1.1"
+authors = [
+    { name="Ilya Chechetkin", email="illaech@gmail.com" },
+]
 description = "Using Elma3 Web API from python"
-version = "0.1.0"
 readme = "README.md"
-license = {file = "LICENSE"}
 requires-python = ">=3.10"
+license = {file = "LICENSE"}
+classifiers = [
+    "Programming Language :: Python :: 3.10",
+    "Development Status :: 3 - Alpha",
+    "License :: OSI Approved :: BSD License",
+    "Natural Language :: Russian",
+    "Operating System :: OS Independent",
+    "Topic :: Utilities",
+]
 dependencies = ["requests~=2.28"]
+
+[project.urls]
+"Homepage" = "https://github.com/SovetnikProf/ElmaWebAPI/"
+"Bug Tracker" = "https://github.com/SovetnikProf/ElmaWebAPI/issues/"
 
 [project.optional-dependencies]
 tests = [
